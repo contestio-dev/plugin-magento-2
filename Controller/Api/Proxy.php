@@ -1,38 +1,40 @@
 <?php
 namespace Contestio\Connect\Controller\Api;
 
-use Magento\Backend\App\Action;
+use Magento\Framework\App\Action\Action;
 use Magento\Framework\App\Action\Context;
 use Magento\Framework\Controller\Result\JsonFactory;
-use Magento\Framework\App\Action\HttpPostActionInterface;
-use Magento\Framework\App\Request\Http; 
+use Contestio\Connect\Helper\Data as ApiHelper;
 
-class Proxy extends Action implements HttpPostActionInterface
+class Proxy extends Action
 {
     protected $resultJsonFactory;
+    protected $apiHelper;
 
-    public function __construct(Context $context, JsonFactory $resultJsonFactory)
-    {
+    public function __construct(
+        Context $context,
+        JsonFactory $resultJsonFactory,
+        ApiHelper $apiHelper
+    ) {
         $this->resultJsonFactory = $resultJsonFactory;
+        $this->apiHelper = $apiHelper;
         parent::__construct($context);
     }
 
     public function execute()
     {
-        $result = $this->resultJsonFactory->create();
-        $method = $this->getRequest()->getMethod();
-        
-        $data = [];
-        $data = $this->getRequest()->getPostValue();
-        // if ($method === 'POST') {
-        // } elseif ($method === 'GET') {
-        //     $data = $this->getRequest()->getParams();
-        // }
+        $resultJson = $this->resultJsonFactory->create();
 
-        return $result->setData([
-            'success' => true,
-            'message' => $method,
-            'data' => $data
-        ]);
+        $endpoint = $this->getRequest()->getParam('endpoint');
+        $method = $this->getRequest()->getMethod();
+        $data = json_decode($this->getRequest()->getContent(), true);
+        $userAgent = $this->getRequest()->getHeader('User-Agent');
+
+        try {
+            $response = $this->apiHelper->callApi($userAgent, $endpoint, $method, $data);
+            return $resultJson->setData($response);
+        } catch (\Exception $e) {
+            return $resultJson->setData(['error' => $e->getMessage()])->setHttpResponseCode(500);
+        }
     }
 }
