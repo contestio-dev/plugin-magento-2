@@ -1,0 +1,11 @@
+<?xml version="1.0"?>
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:framework:Config/etc/config.xsd">
+    <default>
+        <contestio_connect>
+            <api>
+		        <base_url>http://host.docker.internal:3000</base_url>
+                <!-- <base_url>https://api.contestio.fr</base_url> -->
+            </api>
+        </contestio_connect>
+    </default>
+</config>
