@@ -1,0 +1,7 @@
+<?xml version="1.0"?>
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:framework:Event/etc/events.xsd">
+	<!-- Triggred after new order passed -->
+	<event name="checkout_onepage_controller_success_action">
+		<observer name="contestio_order_observer" instance="Contestio\Connect\Model\ContestioObserver" />
+	</event>
+</config>
