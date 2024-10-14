@@ -47,13 +47,6 @@ class Post extends Action
         $username = $data['username'] ?? null;
         $password = $data['password'] ?? null;
 
-        // return $resultJson->setData([
-        //     'username' => $username,
-        //     'password' => $password,
-        //     'method' => $this->getRequest()->getMethod(),
-        //     'content' => $this->getRequest()->getContent()
-        // ]);
-
         try {
             $customer = $this->accountManagement->authenticate($username, $password);
             $this->customerSession->setCustomerDataAsLoggedIn($customer);

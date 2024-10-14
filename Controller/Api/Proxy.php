@@ -46,10 +46,11 @@ class Proxy extends Action
             // Return response
             return $resultJson->setData($response);
         } catch (\Exception $e) {
-            return $resultJson->setData(['error' => $e->getMessage()])->setHttpResponseCode(500);
+            // Decode error message
+            $error = json_decode($e->getMessage(), true);
+            return $resultJson->setData($error)->setHttpResponseCode($e->getCode() ?? 500);
         }
     }
-
 
     private function handleImageUpload($userAgent, $endpoint)
     {

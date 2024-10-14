@@ -66,7 +66,7 @@ class Data extends AbstractHelper
 
         $this->curl->setHeaders($headers);
         
-        if ($method === 'POST' || $method === 'PUT') {
+        if ($method === 'POST' || $method === 'PUT' || $method === 'PATCH' || $method === 'DELETE') {
             $this->curl->setOption(CURLOPT_POSTFIELDS, json_encode($data));
         }
 
@@ -79,11 +79,10 @@ class Data extends AbstractHelper
         if ($httpCode >= 200 && $httpCode < 300) {
             return json_decode($response, true);
         } else {
-            // throw new \Exception("Erreur API: " . $response);
-            return [
-                'success' => false,
-                'message' => $response,
-            ];
+            throw new \Exception(
+                $response,
+                $httpCode
+            );
         }
     }
 
@@ -126,7 +125,7 @@ class Data extends AbstractHelper
                 'fname' => $userData['firstName'],
                 'lname' => $userData['lastName'],
                 'pseudo' => $data['pseudo'],
-                'isFromContestio' => $data['isFromContestio'],
+                'isFromContestio' => $data['isFromContestio'] ?? null,
             ]
         ];
     }
@@ -159,7 +158,7 @@ class Data extends AbstractHelper
             }
             return json_decode($response, true);
         } else {
-            return ['error' => "Erreur API: " . $response];
+            throw new \Exception($response, $httpCode);
         }
     }
 }
