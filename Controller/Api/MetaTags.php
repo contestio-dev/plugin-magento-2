@@ -8,6 +8,7 @@ use Contestio\Connect\Helper\Data as ApiHelper;
 abstract class MetaTags extends Action
 {
     protected $apiHelper;
+    protected $moduleDirReader;
 
     public function __construct(
         Context $context,
@@ -33,13 +34,6 @@ abstract class MetaTags extends Action
         );
 
         try {
-            // Get composer.json version
-            // $composerJson = json_decode(file_get_contents('composer.json'), true);
-            // $version = $composerJson['version'];
-
-            // echo "<meta name='contestio-version-plugin' content='".$version."'>";
-
-            // Utiliser le helper API pour faire l'appel
             $endpoint = 'v1/org/meta-tags/' . urlencode($currentUrl);
             $method = 'GET';
     
