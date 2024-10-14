@@ -1,4 +1,11 @@
 <?php
+/** @var \Contestio\Connect\ViewModel\RouteChecker $viewModel */
+$viewModel = $block->getData('view_model');
+
+if ($viewModel->isContestioRoute() === false) {
+    return;
+}
+
 /** @var \Contestio\Connect\Block\React $block */
 $reactAppUrl = $block->getReactAppUrl();
 $manifestJson = file_get_contents($reactAppUrl . '/manifest.json');
@@ -32,4 +39,5 @@ document.addEventListener('DOMContentLoaded', function() {
         console.error("Root element not found");
     }
 });
+
 </script>

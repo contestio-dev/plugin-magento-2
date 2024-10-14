@@ -45,10 +45,7 @@ class Data extends AbstractHelper
         }
 
         if ($endpoint === 'pseudo' && $method === 'POST') {
-            // $this->handlePseudoUpdate($data);
-
             $response = $this->handlePseudoUpdate($data);
-            return $response;
             if (!$response['success']) {
                 throw new \Exception($response['message']);
                 return;
@@ -116,7 +113,7 @@ class Data extends AbstractHelper
     private function handlePseudoUpdate($data)
     {
         $userData = $this->getMe();
-        return $userData;
+
         if (!$userData) {
             return ['success' => false, 'message' => 'Vous devez être connecté pour modifier votre pseudo.'];
         }
@@ -132,5 +129,37 @@ class Data extends AbstractHelper
                 'isFromContestio' => $data['isFromContestio'],
             ]
         ];
+    }
+
+    public function uploadImage($userAgent, $endpoint, $file)
+    {
+        $url = $this->getApiBaseUrl() . '/' . $endpoint;
+        $headers = [
+            'Content-Type' => 'multipart/form-data',
+            'clientkey' => $this->scopeConfig->getValue('contestio_connect/api_settings/api_key'),
+            'clientsecret' => $this->scopeConfig->getValue('contestio_connect/api_settings/api_secret'),
+            'externalId' => $this->customerSession->getCustomerId(),
+            'clientuseragent' => $userAgent
+        ];
+
+        $this->curl->setHeaders($headers);
+        $this->curl->setOption(CURLOPT_POSTFIELDS, [
+            'file' => new \CURLFile($file['tmp_name'], $file['type'], $file['name'])
+        ]);
+        $this->curl->setOption(CURLOPT_CUSTOMREQUEST, 'POST');
+        $this->curl->get($url);
+
+        $response = $this->curl->getBody();
+        $httpCode = $this->curl->getStatus();
+        $contentType = $this->curl->getHeaders()['Content-Type'] ?? '';
+
+        if ($httpCode >= 200 && $httpCode < 300) {
+            if (strpos($contentType, 'image/webp') !== false) {
+                return base64_encode($response);
+            }
+            return json_decode($response, true);
+        } else {
+            return ['error' => "Erreur API: " . $response];
+        }
     }
 }

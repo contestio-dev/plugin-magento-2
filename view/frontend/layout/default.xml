@@ -2,7 +2,11 @@
 <page xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" layout="1column" xsi:noNamespaceSchemaLocation="urn:magento:framework:View/Layout/etc/page_configuration.xsd">
     <body>
         <referenceContainer name="content">
-            <block class="Contestio\Connect\Block\React" name="contestio_react" template="Contestio_Connect::react.phtml" />
+            <block class="Contestio\Connect\Block\React" name="contestio_react" template="Contestio_Connect::react.phtml">
+                <arguments>
+                    <argument name="view_model" xsi:type="object">Contestio\Connect\ViewModel\RouteChecker</argument>
+                </arguments>
+            </block>
         </referenceContainer>
     </body>
 </page>

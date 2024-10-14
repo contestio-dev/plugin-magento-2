@@ -32,14 +32,27 @@ class Post extends Action
     {
         $resultJson = $this->resultJsonFactory->create();
 
-        $username = $this->getRequest()->getParam('username');
-        $password = $this->getRequest()->getParam('password');
+        // Get POST data as JSON and decode it
+        $content = $this->getRequest()->getContent();
+        $data = json_decode($content, true);
 
-        return $resultJson->setData([
-            'username' => $username,
-            'password' => $password,
-            'post' => $this->getRequest()->getPostValue()
-        ]);
+        // Check if the JSON decoding was successful
+        if (json_last_error() !== JSON_ERROR_NONE) {
+            return $resultJson->setData([
+                'success' => false,
+                'message' => __('Invalid JSON data')
+            ])->setHttpResponseCode(400);
+        }
+
+        $username = $data['username'] ?? null;
+        $password = $data['password'] ?? null;
+
+        // return $resultJson->setData([
+        //     'username' => $username,
+        //     'password' => $password,
+        //     'method' => $this->getRequest()->getMethod(),
+        //     'content' => $this->getRequest()->getContent()
+        // ]);
 
         try {
             $customer = $this->accountManagement->authenticate($username, $password);
