@@ -134,31 +134,39 @@ class Data extends AbstractHelper
     {
         $url = $this->getApiBaseUrl() . '/' . $endpoint;
         $headers = [
-            'Content-Type' => 'multipart/form-data',
-            'clientkey' => $this->scopeConfig->getValue('contestio_connect/api_settings/api_key'),
-            'clientsecret' => $this->scopeConfig->getValue('contestio_connect/api_settings/api_secret'),
-            'externalId' => $this->customerSession->getCustomerId(),
-            'clientuseragent' => $userAgent
+            'clientkey: ' . $this->scopeConfig->getValue('contestio_connect/api_settings/api_key'),
+            'clientsecret: ' . $this->scopeConfig->getValue('contestio_connect/api_settings/api_secret'),
+            'externalId: ' . $this->customerSession->getCustomerId(),
+            'clientuseragent: ' . $userAgent
         ];
 
-        $this->curl->setHeaders($headers);
-        $this->curl->setOption(CURLOPT_POSTFIELDS, [
-            'file' => new \CURLFile($file['tmp_name'], $file['type'], $file['name'])
-        ]);
-        $this->curl->setOption(CURLOPT_CUSTOMREQUEST, 'POST');
-        $this->curl->get($url);
+        try {
+            $ch = curl_init($url);
+            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+            curl_setopt($ch, CURLOPT_POST, true);
 
-        $response = $this->curl->getBody();
-        $httpCode = $this->curl->getStatus();
-        $contentType = $this->curl->getHeaders()['Content-Type'] ?? '';
+            curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
+            
+            $postFields = [
+                'file' => new \CURLFile($file['tmp_name'], $file['type'], $file['name'])
+            ];
+            curl_setopt($ch, CURLOPT_POSTFIELDS, $postFields);
 
-        if ($httpCode >= 200 && $httpCode < 300) {
-            if (strpos($contentType, 'image/webp') !== false) {
-                return base64_encode($response);
+            $response = curl_exec($ch);
+            $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+            $contentType = curl_getinfo($ch, CURLINFO_CONTENT_TYPE);
+            curl_close($ch);
+    
+            if ($httpCode >= 200 && $httpCode < 300) {
+                if (strpos($contentType, 'image/webp') !== false) {
+                    return base64_encode($response);
+                }
+                return json_decode($response, true);
+            } else {
+                throw new \Exception($response, $httpCode);
             }
-            return json_decode($response, true);
-        } else {
-            throw new \Exception($response, $httpCode);
+        } catch (\Exception $e) {
+            throw new \Exception($e->getMessage(), $e->getCode());
         }
     }
 }

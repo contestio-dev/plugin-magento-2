@@ -4,7 +4,7 @@
         <contestio_connect>
             <api>
 		        <!-- <base_url>http://host.docker.internal:3000</base_url> -->
-                <base_url>https://dev.api.contestio.fr</base_url>
+                <base_url>https://api.contestio.fr</base_url>
             </api>
         </contestio_connect>
     </default>
