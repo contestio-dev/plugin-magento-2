@@ -20,7 +20,7 @@ $manifest = json_decode($manifestJson, true);
 </style>
 
 <link rel="stylesheet" href="<?= $reactAppUrl . $manifest['main.css'] ?>" />
-<div id="root"></div>
+<div id="contestio-root"></div>
 
 <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
 <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
@@ -30,15 +30,12 @@ $manifest = json_decode($manifestJson, true);
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    console.log('DOM loaded');
-    var rootElement = document.getElementById('root');
-    console.log('Root element:', rootElement);
+    const rootElement = document.getElementById('contestio-root');
     
     if (rootElement) {
-        console.log('React application loaded');
+        console.log('Contestio - React application loaded');
     } else {
-        console.error("Root element not found");
+        console.error("Contestio - Root element not found");
     }
 });
-
 </script>
