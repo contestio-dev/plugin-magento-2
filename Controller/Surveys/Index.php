@@ -21,7 +21,11 @@ class Index extends MetaTags
 
     public function execute()
     {
-        parent::printMetaTags();
+        try {
+            parent::printMetaTags();
+        } catch (\Exception $e) {
+            // echo $e->getMessage();
+        }
         
         $resultPage = $this->resultPageFactory->create();
         return $resultPage;

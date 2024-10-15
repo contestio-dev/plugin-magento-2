@@ -4,9 +4,33 @@
         <tab id="contestio" translate="label" sortOrder="10">
             <label>Contestio</label>
         </tab>
+
+        <section id="contestio_connect_navigation" translate="label" type="text" sortOrder="321" showInDefault="1" showInWebsite="1" showInStore="1">
+            <label>Bouton principal</label>
+            <tab>contestio</tab>
+            <resource>Contestio_Connect::configuration</resource>
+
+            <group id="nav_button" translate="label" type="text" sortOrder="10" showInDefault="1" showInWebsite="1" showInStore="1">
+                <label>Paramètres par défaut du bouton</label>
+                <comment><![CDATA[Afficher ou masquer le bouton, modifier son texte.]]></comment>
+
+                <field id="show" sortOrder="1" type="select" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Afficher le bouton</label>
+                    <comment>Afficher le bouton dans la barre de navigation</comment>
+                    <source_model>Contestio\Connect\Model\Config\Source\ToggleShow</source_model>
+                </field>
+                
+                <field id="text" translate="label comment" sortOrder="2" type="text" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Texte à afficher</label>
+                    <comment>Default: Le Club</comment>
+                    <validate>validate-no-html-tags</validate>
+                </field>
+            </group>
+        </section>
+
         <section id="contestio_connect" translate="label" sortOrder="130" showInDefault="1" showInWebsite="1" showInStore="1">
             <class>separator-top</class>
-            <label>Configuration Contestio</label>
+            <label>Clé d'API</label>
             <tab>contestio</tab>
             <resource>Contestio_Connect::config</resource>
             <group id="api_settings" translate="label" type="text" sortOrder="10" showInDefault="1" showInWebsite="1" showInStore="1">
