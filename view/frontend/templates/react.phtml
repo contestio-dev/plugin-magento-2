@@ -3,6 +3,7 @@
 $viewModel = $block->getData('view_model');
 
 if ($viewModel->isContestioRoute() === false) {
+    // If not contestio route, do not load React app
     return;
 }
 
@@ -12,20 +13,20 @@ $manifestJson = file_get_contents($reactAppUrl . '/manifest.json');
 $manifest = json_decode($manifestJson, true);
 ?>
 
-<style type="text/css">
-    .main-container,
-    .page-main {
-        padding: 0 !important;
-    }
-</style>
-
+<!-- Load React app styles -->
 <link rel="stylesheet" href="<?= $reactAppUrl . $manifest['main.css'] ?>" />
+
+<!-- Load React app -->
 <div id="contestio-root"></div>
 
+<!-- Load React -->
 <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
 <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
 
+<!-- Load React app vendors -->
 <script src="<?= $reactAppUrl . $manifest['vendors.js'] ?>"></script>
+
+<!-- Load React app entry point -->
 <script src="<?= $reactAppUrl . $manifest['main.js'] ?>"></script>
 
 <script>
