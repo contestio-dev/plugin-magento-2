@@ -5,7 +5,7 @@ use Magento\Framework\View\Element\Template;
 
 class React extends Template
 {
-    public function __construct(Context $context, array $data = [])
+    public function __construct()
     {
         $this->_isScopePrivate = true;
     }
