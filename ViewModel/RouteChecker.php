@@ -6,7 +6,7 @@ use Magento\Framework\View\Element\Block\ArgumentInterface;
 
 class RouteChecker implements ArgumentInterface
 {
-    private $request;
+    protected $request;
 
     public function __construct(Http $request)
     {
@@ -15,6 +15,10 @@ class RouteChecker implements ArgumentInterface
 
     public function isContestioRoute(): bool
     {
-        return strpos($this->request->getPathInfo(), '/contestio') === 0;
+        $pathInfo = trim($this->request->getPathInfo(), '/');
+        $pathParts = explode('/', $pathInfo);
+        
+        // Vérifier si 'contestio' est présent dans l'URL, en ignorant le préfixe de langue potentiel
+        return in_array('contestio', $pathParts);
     }
 }

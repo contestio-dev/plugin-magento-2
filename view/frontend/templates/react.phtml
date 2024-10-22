@@ -9,7 +9,8 @@ if ($viewModel->isContestioRoute() === false) {
 
 /** @var \Contestio\Connect\Block\React $block */
 $reactAppUrl = $block->getReactAppUrl();
-$manifestJson = file_get_contents($reactAppUrl . '/manifest.json');
+$manifestUrl = $reactAppUrl . '/manifest.json?v=' . time();
+$manifestJson = file_get_contents($manifestUrl);
 $manifest = json_decode($manifestJson, true);
 ?>
 
