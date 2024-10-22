@@ -15,7 +15,7 @@ $manifest = json_decode($manifestJson, true);
 ?>
 
 <!-- Load React app styles -->
-<link rel="stylesheet" href="<?= $reactAppUrl . $manifest['main.css'] ?>" />
+<link rel="stylesheet" href="<?= $reactAppUrl . $manifest['main.css'] ?>?v=<?= time() ?>" />
 
 <!-- Load React app -->
 <div id="contestio-root"></div>
@@ -25,10 +25,10 @@ $manifest = json_decode($manifestJson, true);
 <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
 
 <!-- Load React app vendors -->
-<script src="<?= $reactAppUrl . $manifest['vendors.js'] ?>"></script>
+<script src="<?= $reactAppUrl . $manifest['vendors.js'] ?>?v=<?= time() ?>"></script>
 
 <!-- Load React app entry point -->
-<script src="<?= $reactAppUrl . $manifest['main.js'] ?>"></script>
+<script src="<?= $reactAppUrl . $manifest['main.js'] ?>?v=<?= time() ?>"></script>
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
