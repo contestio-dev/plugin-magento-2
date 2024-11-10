@@ -13,7 +13,6 @@ class Data extends AbstractHelper
     protected $curl;
     protected $customerSession;
     protected $scopeConfig;
-    const XML_PATH_API_BASE_URL = 'contestio_connect/api/base_url';
 
     public function __construct(
         Context $context,
@@ -28,12 +27,10 @@ class Data extends AbstractHelper
     }
     
 
-    public function getApiBaseUrl()
+    private function getApiBaseUrl()
     {
-        return $this->scopeConfig->getValue(
-            self::XML_PATH_API_BASE_URL,
-            ScopeInterface::SCOPE_STORE
-        );
+        $baseUrl = $this->scopeConfig->getValue('contestio_connect/api_settings_advanced/base_url');
+        return $baseUrl ? $baseUrl : 'https://api.contestio.fr';
     }
 
     public function callApi($userAgent, $endpoint, $method, $data = null)
@@ -64,17 +61,21 @@ class Data extends AbstractHelper
             'clientuseragent' => $userAgent
         ];
 
-        $this->curl->setHeaders($headers);
+        $this->curl->setHeaders($headers); // Headers
         
         if ($method === 'POST' || $method === 'PUT' || $method === 'PATCH' || $method === 'DELETE') {
-            $this->curl->setOption(CURLOPT_POSTFIELDS, json_encode($data));
+            $this->curl->setOption(CURLOPT_POSTFIELDS, json_encode($data)); // Données POST
         }
 
-        $this->curl->setOption(CURLOPT_CUSTOMREQUEST, $method);
+        $this->curl->setOption(CURLOPT_CUSTOMREQUEST, $method); // Méthode HTTP
+
+        $this->curl->setOption(CURLOPT_TIMEOUT, 5); // Timeout après 5 secondes
+        $this->curl->setOption(CURLOPT_CONNECTTIMEOUT, 3); // Timeout de connexion après 3 secondes
+
         $this->curl->get($url);
 
-        $response = $this->curl->getBody();
-        $httpCode = $this->curl->getStatus();
+        $response = $this->curl->getBody(); // Réponse
+        $httpCode = $this->curl->getStatus(); // Code HTTP
 
         if ($httpCode >= 200 && $httpCode < 300) {
             return json_decode($response, true);
@@ -107,7 +108,6 @@ class Data extends AbstractHelper
     
         return $customerData;
     }
-
 
     private function handlePseudoUpdate($data)
     {
