@@ -7,36 +7,40 @@ if ($viewModel->isContestioRoute() === false) {
     return;
 }
 
-$metaData = $this->getMetaTags();
+try {
+    $metaData = $this->getMetaTags();
+} catch (Exception $e) {
+    $metaData = [];
+}
 
 // Card type
 echo "<meta name='twitter:card' content='summary'>";
 
 // Og url
-if ($metaData['currentUrl']) {
+if (isset($metaData['currentUrl'])) {
     echo "<meta property='og:url' content='".$metaData['currentUrl']."'>";
     echo "<meta property='twitter:url' content='".$metaData['currentUrl']."'>";
 }
 
 // Composer package version
-if ($metaData['version']) {
+if (isset($metaData['version'])) {
     echo "<meta data-contestio-version='".$metaData['version']."'>";
 }
 
 // Open graph and twitter
-if ($metaData['title']) {
+if (isset($metaData['title'])) {
     echo "<meta property='og:title' content='".$metaData['title']."'>";
     echo "<meta property='twitter:title' content='".$metaData['title']."'>";
 }
-if ($metaData['description']) {
+if (isset($metaData['description'])) {
     echo "<meta property='og:description' content='".$metaData['description']."'>";
     echo "<meta property='twitter:description' content='".$metaData['description']."'>";
 }
-if ($metaData['image']) {
+if (isset($metaData['image'])) {
     echo "<meta property='og:image' content='".$metaData['image']."'>";
     echo "<meta property='twitter:image' content='".$metaData['image']."'>";
 }
-if ($metaData['siteName']) {
+if (isset($metaData['siteName'])) {
     echo "<meta property='og:site_name' content='".$metaData['siteName']."'>";
     echo "<meta property='twitter:site' content='".$metaData['siteName']."'>";
 }

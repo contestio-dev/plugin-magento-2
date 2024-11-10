@@ -94,6 +94,7 @@ class Data extends AbstractHelper
             'email' => null,
             'firstName' => null,
             'lastName' => null,
+            'createdAt' => null,
         ];
     
         if ($this->customerSession->isLoggedIn()) {
@@ -103,6 +104,7 @@ class Data extends AbstractHelper
                 'email' => $customer->getEmail(),
                 'firstName' => $customer->getFirstname(),
                 'lastName' => $customer->getLastname(),
+                'createdAt' => $customer->getCreatedAt(),
             ];
         }
     
@@ -126,6 +128,8 @@ class Data extends AbstractHelper
                 'lname' => $userData['lastName'],
                 'pseudo' => $data['pseudo'],
                 'isFromContestio' => $data['isFromContestio'] ?? null,
+                'createdAt' => $userData['createdAt'],
+                'currentTimestamp' => time(),
             ]
         ];
     }
