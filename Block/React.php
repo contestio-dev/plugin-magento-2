@@ -11,6 +11,7 @@ class React extends Template
     protected $apiHelper;
     protected $componentRegistrar;
     protected $directoryList;
+    protected $scopeConfig;
 
     public function __construct(
         Template\Context $context,
@@ -22,12 +23,14 @@ class React extends Template
         $this->apiHelper = $apiHelper;
         $this->componentRegistrar = $componentRegistrar;
         $this->directoryList = $directoryList;
+        $this->scopeConfig = $context->getScopeConfig();
         parent::__construct($context, $data);
     }
 
     public function getReactAppUrl()
     {
-        return "https://d36h2ac42341sx.cloudfront.net";
+        $baseUrl = $this->scopeConfig->getValue('contestio_connect/api_settings_advanced/base_url_react');
+        return $baseUrl ? $baseUrl : "https://d36h2ac42341sx.cloudfront.net";
     }
 
     public function getMetaTags()

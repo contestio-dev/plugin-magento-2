@@ -49,6 +49,10 @@
                     <label>URL de l'API</label>
                     <comment>Default: https://api.contestio.fr</comment>
                 </field>
+                <field id="base_url_react" translate="label" type="text" sortOrder="2" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>URL de l'application</label>
+                    <comment>Default: https://d36h2ac42341sx.cloudfront.net</comment>
+                </field>
             </group>
         </section>
     </system>
