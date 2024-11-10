@@ -1,12 +1,12 @@
 <?php
 namespace Contestio\Connect\Controller\News;
 
+use Magento\Framework\App\Action\Action;
 use Magento\Framework\App\Action\Context;
 use Magento\Framework\View\Result\PageFactory;
-use Contestio\Connect\Controller\Api\MetaTags;
 use Contestio\Connect\Helper\Data as ApiHelper;
 
-class Index extends MetaTags
+class Index extends Action
 {
     protected $resultPageFactory;
 
@@ -21,12 +21,6 @@ class Index extends MetaTags
 
     public function execute()
     {
-        try {
-            parent::printMetaTags();
-        } catch (\Exception $e) {
-            // echo $e->getMessage();
-        }
-        
         $resultPage = $this->resultPageFactory->create();
         return $resultPage;
     }

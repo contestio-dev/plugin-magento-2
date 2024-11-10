@@ -9,35 +9,64 @@ if ($viewModel->isContestioRoute() === false) {
 
 /** @var \Contestio\Connect\Block\React $block */
 $reactAppUrl = $block->getReactAppUrl();
-$manifestUrl = $reactAppUrl . '/manifest.json?v=' . time();
-$manifestJson = file_get_contents($manifestUrl);
-$manifest = json_decode($manifestJson, true);
+
+$manifest = null;
+
+try {
+    // Get manifest.json from remote server
+    $curl = curl_init($reactAppUrl . '/manifest.json' . '?v=' . time());
+    curl_setopt($curl, CURLOPT_RETURNTRANSFER, true);
+    $response = curl_exec($curl);
+    curl_close($curl);
+    
+    $manifest = json_decode($response, true);
+  } catch (Exception $e) {
+    $manifest = null;
+  }
 ?>
 
-<!-- Load React app styles -->
-<link rel="stylesheet" href="<?= $reactAppUrl . $manifest['main.css'] ?>" />
+<?php if ($manifest): ?>
+  <!-- Load styles -->
+  <link rel="stylesheet" href="<?php echo $reactAppUrl . $manifest['main.css']; ?>" />
 
-<!-- Load React app -->
-<div id="contestio-root"></div>
+  <!-- Main container -->
+  <div id="contestio-root"></div>
+  
+  <!-- Load React, ReactDOM -->
+  <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  
+  <!-- Load vendors -->
+  <script src="<?php echo $reactAppUrl . $manifest['vendors.js']; ?>"></script>
+  
+  <!-- Initialize React -->
+  <script src="<?php echo $reactAppUrl . $manifest['main.js']; ?>"></script>
+  
+  <!-- Check if the root element exists -->
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      const rootElement = document.getElementById('contestio-root');
+      
+      if (rootElement) {
+        console.log('Application React loaded');
+      } else {
+        console.error("Element 'contestio-root' not found");
+      }
+    });
+  </script>
+<?php else: ?>
+  <!-- Error message -->
+  <div style="text-align: center; padding: 20px; width: fit-content; margin: 20px auto;border: 1px solid #ccc;border-radius: 10px;box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);font-size: 16px;">
+    <p style="font-size: 1.2em; font-weight: bold;">Oups, une erreur est survenue.</p>
+    <em style="font-size: 1em;">
+      Merci de réessayer ultérieurement.
+    </em>
+  </div>
 
-<!-- Load React -->
-<script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
-<script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-
-<!-- Load React app vendors -->
-<script src="<?= $reactAppUrl . $manifest['vendors.js'] ?>"></script>
-
-<!-- Load React app entry point -->
-<script src="<?= $reactAppUrl . $manifest['main.js'] ?>"></script>
-
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    const rootElement = document.getElementById('contestio-root');
-    
-    if (rootElement) {
-        console.log('Contestio - React application loaded');
-    } else {
-        console.error("Contestio - Root element not found");
-    }
-});
-</script>
+  <!-- Print error message -->
+  <script>
+    console.error('Failed to load manifest.json');
+    // Print $manifest encoded in JSON
+    console.log('Manifest:', <?php echo json_encode($manifest); ?>);
+  </script>
+<?php endif; ?>

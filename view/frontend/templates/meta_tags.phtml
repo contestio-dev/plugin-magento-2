@@ -1,0 +1,43 @@
+<?php
+/** @var \Contestio\Connect\ViewModel\RouteChecker $viewModel */
+$viewModel = $block->getData('view_model');
+
+if ($viewModel->isContestioRoute() === false) {
+    // If not contestio route, do not load React app
+    return;
+}
+
+$metaData = $this->getMetaTags();
+
+// Card type
+echo "<meta name='twitter:card' content='summary'>";
+
+// Og url
+if ($metaData['currentUrl']) {
+    echo "<meta property='og:url' content='".$metaData['currentUrl']."'>";
+    echo "<meta property='twitter:url' content='".$metaData['currentUrl']."'>";
+}
+
+// Composer package version
+if ($metaData['version']) {
+    echo "<meta data-contestio-version='".$metaData['version']."'>";
+}
+
+// Open graph and twitter
+if ($metaData['title']) {
+    echo "<meta property='og:title' content='".$metaData['title']."'>";
+    echo "<meta property='twitter:title' content='".$metaData['title']."'>";
+}
+if ($metaData['description']) {
+    echo "<meta property='og:description' content='".$metaData['description']."'>";
+    echo "<meta property='twitter:description' content='".$metaData['description']."'>";
+}
+if ($metaData['image']) {
+    echo "<meta property='og:image' content='".$metaData['image']."'>";
+    echo "<meta property='twitter:image' content='".$metaData['image']."'>";
+}
+if ($metaData['siteName']) {
+    echo "<meta property='og:site_name' content='".$metaData['siteName']."'>";
+    echo "<meta property='twitter:site' content='".$metaData['siteName']."'>";
+}
+?>
