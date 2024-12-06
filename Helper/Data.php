@@ -78,6 +78,15 @@ class Data extends AbstractHelper
         $httpCode = $this->curl->getStatus(); // Code HTTP
 
         if ($httpCode >= 200 && $httpCode < 300) {
+            if ($endpoint === 'v1/users/final/generate-token') {
+                $response = json_decode($response, true);
+                // Add apiurl to response
+                $response['apiurl'] = $this->getApiBaseUrl();
+
+                return $response;
+            }
+
+            // Else, return json decoded response
             return json_decode($response, true);
         } else {
             throw new \Exception(
