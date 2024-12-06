@@ -25,22 +25,25 @@ class ContestioObserver implements ObserverInterface
 
     private function notifyApi($order)
     {
-        $userAgent = $_SERVER['HTTP_USER_AGENT'] ?? '';
+        try {
+            $userAgent = $_SERVER['HTTP_USER_AGENT'] ?? '';
+            
+            // Get user id and check if we store order
+            $checkUser = $this->apiHelper->callApi($userAgent, 'v1/users/me', "GET");
 
-        // Check if user is from Contestio
-        $checkUser = $this->apiHelper->callApi($userAgent, 'v1/users/final/me', "GET");
+            // If storeOrder === true, send order to Contestio
+            if ($checkUser && isset($checkUser['storeOrder']) && $checkUser['storeOrder'] === true) {
+                $orderData = array(
+                    'order_id' => $order->getIncrementId(),
+                    'amount' => $order->getGrandTotal(),
+                    'currency' => $order->getOrderCurrencyCode(),
+                );
 
-        if (!$checkUser) {
-            return;
+                // Send order to Contestio
+                $this->apiHelper->callApi($userAgent, 'v1/users/final/new-order', "POST", $orderData);
+            }
+        } catch (\Exception $e) {
+            return false;
         }
-
-        $orderData = [
-            'order_id' => $order->getIncrementId(),
-            'amount' => $order->getGrandTotal(),
-            'currency' => $order->getOrderCurrencyCode(),
-        ];
-
-        // Send order to Contestio
-        $this->apiHelper->callApi($userAgent, 'v1/users/final/new-order', "POST", $orderData);
     }
 }
