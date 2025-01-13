@@ -1,5 +1,5 @@
 <?php
-namespace Contestio\Connect\Controller\Profile;
+namespace Contestio\Connect\Controller\Page;
 
 use Magento\Framework\App\Action\Action;
 use Magento\Framework\App\Action\Context;
@@ -20,7 +20,7 @@ class Index extends Action
     }
 
     public function execute()
-    {        
+    {
         $resultPage = $this->resultPageFactory->create();
         return $resultPage;
     }
