@@ -3,70 +3,116 @@
 $viewModel = $block->getData('view_model');
 
 if ($viewModel->isContestioRoute() === false) {
-    // If not contestio route, do not load React app
-    return;
+  // If not contestio route, do not load React app
+  return;
 }
 
 /** @var \Contestio\Connect\Block\React $block */
-$reactAppUrl = $block->getReactAppUrl();
-
-$manifest = null;
-
-try {
-    // Get manifest.json from remote server
-    $curl = curl_init($reactAppUrl . '/manifest.json' . '?v=' . time());
-    curl_setopt($curl, CURLOPT_RETURNTRANSFER, true);
-    $response = curl_exec($curl);
-    curl_close($curl);
-    
-    $manifest = json_decode($response, true);
-  } catch (Exception $e) {
-    $manifest = null;
-  }
+$iframeUrl = $block->getIframeUrl();
+$queryParams = $block->getQueryParams();
 ?>
 
-<?php if ($manifest): ?>
-  <!-- Load styles -->
-  <link rel="stylesheet" href="<?php echo $reactAppUrl . $manifest['main.css']; ?>" />
-
-  <!-- Main container -->
-  <div id="contestio-root"></div>
-  
-  <!-- Load React, ReactDOM -->
-  <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
-  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-  
-  <!-- Load vendors -->
-  <script src="<?php echo $reactAppUrl . $manifest['vendors.js']; ?>"></script>
-  
-  <!-- Initialize React -->
-  <script src="<?php echo $reactAppUrl . $manifest['main.js']; ?>"></script>
-  
-  <!-- Check if the root element exists -->
-  <script>
-    document.addEventListener('DOMContentLoaded', function() {
-      const rootElement = document.getElementById('contestio-root');
-      
-      if (rootElement) {
-        console.log('Application React loaded');
-      } else {
-        console.error("Element 'contestio-root' not found");
-      }
-    });
-  </script>
-<?php else: ?>
-  <!-- Error message -->
-  <div style="text-align: center; padding: 20px; width: fit-content; margin: 20px auto;border: 1px solid #ccc;border-radius: 10px;box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);font-size: 16px;">
-    <p style="font-size: 1.2em; font-weight: bold;">Oups, une erreur est survenue.</p>
-    <em style="font-size: 1em;">
-      Merci de réessayer ultérieurement.
-    </em>
+<div class="contestio-container">
+  <div id="contestio-root">
+    <iframe
+      src="<?php echo $iframeUrl; ?><?php echo $queryParams; ?>"
+      width="100%"
+      height="100%"
+      frameborder="0"
+      allowfullscreen
+      class="contestio-iframe">
+    </iframe>
   </div>
+</div>
 
-  <!-- Print error message -->
-  <script>
-    console.error('Failed to load manifest.json');
-    // Print $manifest encoded in JSON
-    console.log('Manifest:', <?php echo json_encode($manifest); ?>);
-  </script>
-<?php endif; ?>
+<style>
+  /* Enlarge the container */
+  main#MainContent > section > div,
+  main#maincontent {
+    max-width: 100% !important;
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+
+  /* Remove default margins/paddings */
+  main#MainContent > section {
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+
+  /* Remove the title if present */
+  main#MainContent > section > div > h1.main-page-title {
+    display: none;
+  }
+
+  /* Increase default navbar z-index */
+  .section-header.shopify-section-group-header-group {
+    z-index: 100 !important;
+  }
+
+  .contestio-container {
+    width: 100%;
+    height: calc(100vh - 100px); /* Hauteur de la fenêtre moins navbar */
+  }
+
+  .contestio-iframe {
+    width: 100%;
+    height: 100%; /* Prend toute la hauteur du conteneur parent */
+    border: none;
+  }
+
+  #contestio-root {
+    height: 100%;
+  }
+</style>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    const container = document.querySelector('.contestio-container');
+    const header = document.querySelector('header.page-header');
+    const iframe = document.querySelector('.contestio-iframe');
+
+    // Get 'l' parameter from the current url
+    const url = new URL(window.location.href);
+    const l = url.searchParams.get('l');
+
+    if (l && l.length > 1) {
+      // Add the 'l' parameter to the iframe src (before the ?)
+      iframe.src = iframe.src.replace('?', l + '?');
+    }
+
+    if (container) {
+      function adjustHeight() {
+        const windowHeight = window.innerHeight;
+        const newHeight = windowHeight - (header ? header.offsetHeight : 0); // Remove the header height
+        container.style.height = `${newHeight}px`;
+      }
+
+      // Adjust the height initially
+      adjustHeight();
+
+      // Adjust the height when the window is resized
+      window.addEventListener('resize', adjustHeight);
+    }
+
+    window.addEventListener('message', (event) => {
+      if (event.origin === new URL(iframe.src).origin) {
+        const { pathname } = event.data;
+
+        // Replace 'l' variable from the current url with the pathname if it's different
+        const url = new URL(window.location.href);
+        if (url.searchParams.get('l') !== pathname) {
+          // Delete the 'l' parameter
+          url.searchParams.delete('l');
+          if (pathname !== '' && pathname !== '/') {
+            // Add the new parameter without encoding
+            const newUrl = url.toString() + (url.toString().includes('?') ? '&' : '?') + 'l=' + pathname;
+            history.pushState(null, null, newUrl);
+          } else {
+            history.pushState(null, null, url.toString());
+          }
+        }
+      }
+    });    
+  });
+</script>

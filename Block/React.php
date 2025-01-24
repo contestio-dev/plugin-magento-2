@@ -5,6 +5,7 @@ use Magento\Framework\View\Element\Template;
 use Contestio\Connect\Helper\Data as ApiHelper;
 use Magento\Framework\Component\ComponentRegistrar;
 use Magento\Framework\Filesystem\DirectoryList;
+use Magento\Customer\Model\Session as CustomerSession;
 
 class React extends Template
 {
@@ -12,25 +13,76 @@ class React extends Template
     protected $componentRegistrar;
     protected $directoryList;
     protected $scopeConfig;
+    protected $customerSession;
 
     public function __construct(
         Template\Context $context,
         ApiHelper $apiHelper,
         ComponentRegistrar $componentRegistrar,
         DirectoryList $directoryList,
+        CustomerSession $customerSession,
         array $data = []
     ) {
         $this->apiHelper = $apiHelper;
         $this->componentRegistrar = $componentRegistrar;
         $this->directoryList = $directoryList;
         $this->scopeConfig = $context->getScopeConfig();
+        $this->customerSession = $customerSession;
         parent::__construct($context, $data);
     }
 
-    public function getReactAppUrl()
+    public function getIframeUrl()
     {
-        $baseUrl = $this->scopeConfig->getValue('contestio_connect/api_settings_advanced/base_url_react');
-        return $baseUrl ? $baseUrl : "https://react.contestio.fr";
+        $baseUrl = $this->scopeConfig->getValue('contestio_connect/api_settings_advanced/base_url_iframe');
+        return $baseUrl ? $baseUrl : "https://plugin.staging.contestio.fr";
+    }
+
+    function encryptDataBase64($data, $accessToken) {
+        $method = 'AES-256-CBC';
+        $key = hash('sha256', $accessToken, true); // Génération de la clé
+        $iv = openssl_random_pseudo_bytes(openssl_cipher_iv_length($method)); // Génération d'un IV
+    
+        // Chiffrement des données
+        $encrypted = openssl_encrypt($data, $method, $key, 0, $iv);
+    
+        // Encodage des données et de l'IV en Base64
+        return base64_encode(json_encode([
+            'iv' => base64_encode($iv),
+            'data' => $encrypted,
+        ]));
+    }
+
+    public function getQueryParams()
+    {
+        // $shop = "contestio-beta-shopi.myshopify.com";
+        $shop =  $this->scopeConfig->getValue('contestio_connect/api_settings/api_key');
+        $accessToken =  $this->scopeConfig->getValue('contestio_connect/api_settings/access_token');
+        
+        // Récupération des données du client connecté
+        $customer = $this->customerSession->getCustomer();
+        $customerId = $customer->getId();
+        $customerEmail = $customer->getEmail();
+
+        $params = "?";
+
+        if ($shop) {
+            $params .= "shop=" . urlencode($shop) . "&";
+        }
+
+        if ($customerId) {
+            // $params .= "customer_id=" . urlencode($customerId) . "&";
+            // Hash customer id with access token
+            $params .= "customer_id=" . urlencode($this->encryptDataBase64($customerId, $accessToken)) . "&";
+        }
+
+        if ($customerEmail) {
+            // $params .= "customer_email=" . urlencode($customerEmail);
+            // Hash customer email with access token
+            $params .= "customer_email=" . urlencode($this->encryptDataBase64($customerEmail, $accessToken));
+        }
+
+        // Return the encoded params
+        return $params === "?" ? "" : $params;
     }
 
     public function getMetaTags()

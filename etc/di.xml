@@ -3,4 +3,9 @@
     <type name="Magento\Theme\Block\Html\Topmenu">
         <plugin name="add_cms_menu" type="Contestio\Connect\Plugin\Topmenu" sortOrder="1" />
     </type>
+    <type name="Contestio\Connect\Block\React">
+        <arguments>
+            <argument name="customerSession" xsi:type="object">Magento\Customer\Model\Session\Proxy</argument>
+        </arguments>
+    </type>
 </config>

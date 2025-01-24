@@ -96,90 +96,90 @@ class Data extends AbstractHelper
         }
     }
 
-    public function getMe()
-    {
-        $customerData = [
-            'id' => null,
-            'email' => null,
-            'firstName' => null,
-            'lastName' => null,
-            'createdAt' => null,
-        ];
+    // public function getMe()
+    // {
+    //     $customerData = [
+    //         'id' => null,
+    //         'email' => null,
+    //         'firstName' => null,
+    //         'lastName' => null,
+    //         'createdAt' => null,
+    //     ];
     
-        if ($this->customerSession->isLoggedIn()) {
-            $customer = $this->customerSession->getCustomer();
-            $customerData = [
-                'id' => $customer->getId(),
-                'email' => $customer->getEmail(),
-                'firstName' => $customer->getFirstname(),
-                'lastName' => $customer->getLastname(),
-                'createdAt' => $customer->getCreatedAt(),
-            ];
-        }
+    //     if ($this->customerSession->isLoggedIn()) {
+    //         $customer = $this->customerSession->getCustomer();
+    //         $customerData = [
+    //             'id' => $customer->getId(),
+    //             'email' => $customer->getEmail(),
+    //             'firstName' => $customer->getFirstname(),
+    //             'lastName' => $customer->getLastname(),
+    //             'createdAt' => $customer->getCreatedAt(),
+    //         ];
+    //     }
     
-        return $customerData;
-    }
+    //     return $customerData;
+    // }
 
-    private function handlePseudoUpdate($data)
-    {
-        $userData = $this->getMe();
+    // private function handlePseudoUpdate($data)
+    // {
+    //     $userData = $this->getMe();
 
-        if (!$userData) {
-            return ['success' => false, 'message' => 'Vous devez être connecté pour modifier votre pseudo.'];
-        }
+    //     if (!$userData) {
+    //         return ['success' => false, 'message' => 'Vous devez être connecté pour modifier votre pseudo.'];
+    //     }
 
-        return [
-            'success' => true,
-            'data' => [
-                'externalId' => $userData['id'],
-                'email' => $userData['email'],
-                'fname' => $userData['firstName'],
-                'lname' => $userData['lastName'],
-                'pseudo' => $data['pseudo'],
-                'isFromContestio' => $data['isFromContestio'] ?? null,
-                'createdAt' => $userData['createdAt'],
-                'currentTimestamp' => time(),
-            ]
-        ];
-    }
+    //     return [
+    //         'success' => true,
+    //         'data' => [
+    //             'externalId' => $userData['id'],
+    //             'email' => $userData['email'],
+    //             'fname' => $userData['firstName'],
+    //             'lname' => $userData['lastName'],
+    //             'pseudo' => $data['pseudo'],
+    //             'isFromContestio' => $data['isFromContestio'] ?? null,
+    //             'createdAt' => $userData['createdAt'],
+    //             'currentTimestamp' => time(),
+    //         ]
+    //     ];
+    // }
 
-    public function uploadImage($userAgent, $endpoint, $file)
-    {
-        $url = $this->getApiBaseUrl() . '/' . $endpoint;
-        $headers = [
-            'clientkey: ' . $this->scopeConfig->getValue('contestio_connect/api_settings/api_key'),
-            'clientsecret: ' . $this->scopeConfig->getValue('contestio_connect/api_settings/api_secret'),
-            'externalId: ' . $this->customerSession->getCustomerId(),
-            'clientuseragent: ' . $userAgent
-        ];
+    // public function uploadImage($userAgent, $endpoint, $file)
+    // {
+    //     $url = $this->getApiBaseUrl() . '/' . $endpoint;
+    //     $headers = [
+    //         'clientkey: ' . $this->scopeConfig->getValue('contestio_connect/api_settings/api_key'),
+    //         'clientsecret: ' . $this->scopeConfig->getValue('contestio_connect/api_settings/api_secret'),
+    //         'externalId: ' . $this->customerSession->getCustomerId(),
+    //         'clientuseragent: ' . $userAgent
+    //     ];
 
-        try {
-            $ch = curl_init($url);
-            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-            curl_setopt($ch, CURLOPT_POST, true);
+    //     try {
+    //         $ch = curl_init($url);
+    //         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    //         curl_setopt($ch, CURLOPT_POST, true);
 
-            curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
+    //         curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
             
-            $postFields = [
-                'file' => new \CURLFile($file['tmp_name'], $file['type'], $file['name'])
-            ];
-            curl_setopt($ch, CURLOPT_POSTFIELDS, $postFields);
+    //         $postFields = [
+    //             'file' => new \CURLFile($file['tmp_name'], $file['type'], $file['name'])
+    //         ];
+    //         curl_setopt($ch, CURLOPT_POSTFIELDS, $postFields);
 
-            $response = curl_exec($ch);
-            $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-            $contentType = curl_getinfo($ch, CURLINFO_CONTENT_TYPE);
-            curl_close($ch);
+    //         $response = curl_exec($ch);
+    //         $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    //         $contentType = curl_getinfo($ch, CURLINFO_CONTENT_TYPE);
+    //         curl_close($ch);
     
-            if ($httpCode >= 200 && $httpCode < 300) {
-                if (strpos($contentType, 'image/webp') !== false) {
-                    return base64_encode($response);
-                }
-                return json_decode($response, true);
-            } else {
-                throw new \Exception($response, $httpCode);
-            }
-        } catch (\Exception $e) {
-            throw new \Exception($e->getMessage(), $e->getCode());
-        }
-    }
+    //         if ($httpCode >= 200 && $httpCode < 300) {
+    //             if (strpos($contentType, 'image/webp') !== false) {
+    //                 return base64_encode($response);
+    //             }
+    //             return json_decode($response, true);
+    //         } else {
+    //             throw new \Exception($response, $httpCode);
+    //         }
+    //     } catch (\Exception $e) {
+    //         throw new \Exception($e->getMessage(), $e->getCode());
+    //     }
+    // }
 }
