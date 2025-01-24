@@ -27,27 +27,10 @@ $queryParams = $block->getQueryParams();
 
 <style>
   /* Enlarge the container */
-  main#MainContent > section > div,
   main#maincontent {
     max-width: 100% !important;
     padding: 0 !important;
     margin: 0 !important;
-  }
-
-  /* Remove default margins/paddings */
-  main#MainContent > section {
-    padding: 0 !important;
-    margin: 0 !important;
-  }
-
-  /* Remove the title if present */
-  main#MainContent > section > div > h1.main-page-title {
-    display: none;
-  }
-
-  /* Increase default navbar z-index */
-  .section-header.shopify-section-group-header-group {
-    z-index: 100 !important;
   }
 
   .contestio-container {
@@ -68,13 +51,16 @@ $queryParams = $block->getQueryParams();
 
 <script>
   document.addEventListener('DOMContentLoaded', function() {
+    console.log('DOMContentLoaded');
+    const mainContent = document.querySelector('#maincontent');
     const container = document.querySelector('.contestio-container');
-    const header = document.querySelector('header.page-header');
     const iframe = document.querySelector('.contestio-iframe');
 
     // Get 'l' parameter from the current url
     const url = new URL(window.location.href);
     const l = url.searchParams.get('l');
+
+    let offset = 0;
 
     if (l && l.length > 1) {
       // Add the 'l' parameter to the iframe src (before the ?)
@@ -83,8 +69,14 @@ $queryParams = $block->getQueryParams();
 
     if (container) {
       function adjustHeight() {
+        if (mainContent) {
+          offset = mainContent.offsetTop;
+        }
+
         const windowHeight = window.innerHeight;
-        const newHeight = windowHeight - (header ? header.offsetHeight : 0); // Remove the header height
+        const newHeight = windowHeight - offset; // Remove the header/navbar height
+        
+        // Update the iframe height
         container.style.height = `${newHeight}px`;
       }
 

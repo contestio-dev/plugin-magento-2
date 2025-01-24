@@ -37,21 +37,6 @@ class React extends Template
         return $baseUrl ? $baseUrl : "https://plugin.staging.contestio.fr";
     }
 
-    function encryptDataBase64($data, $accessToken) {
-        $method = 'AES-256-CBC';
-        $key = hash('sha256', $accessToken, true); // Génération de la clé
-        $iv = openssl_random_pseudo_bytes(openssl_cipher_iv_length($method)); // Génération d'un IV
-    
-        // Chiffrement des données
-        $encrypted = openssl_encrypt($data, $method, $key, 0, $iv);
-    
-        // Encodage des données et de l'IV en Base64
-        return base64_encode(json_encode([
-            'iv' => base64_encode($iv),
-            'data' => $encrypted,
-        ]));
-    }
-
     public function getQueryParams()
     {
         // $shop = "contestio-beta-shopi.myshopify.com";
@@ -70,15 +55,13 @@ class React extends Template
         }
 
         if ($customerId) {
-            // $params .= "customer_id=" . urlencode($customerId) . "&";
             // Hash customer id with access token
-            $params .= "customer_id=" . urlencode($this->encryptDataBase64($customerId, $accessToken)) . "&";
+            $params .= "customer_id=" . urlencode($this->apiHelper->encryptDataBase64($customerId, $accessToken)) . "&";
         }
 
         if ($customerEmail) {
-            // $params .= "customer_email=" . urlencode($customerEmail);
             // Hash customer email with access token
-            $params .= "customer_email=" . urlencode($this->encryptDataBase64($customerEmail, $accessToken));
+            $params .= "customer_email=" . urlencode($this->apiHelper->encryptDataBase64($customerEmail, $accessToken));
         }
 
         // Return the encoded params

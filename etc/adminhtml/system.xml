@@ -6,12 +6,12 @@
         </tab>
 
         <section id="contestio_connect_navigation" translate="label" type="text" sortOrder="2" showInDefault="1" showInWebsite="1" showInStore="1">
-            <label>Bouton principal</label>
+            <label>Personnalisation</label>
             <tab>contestio</tab>
             <resource>Contestio_Connect::configuration</resource>
 
             <group id="nav_button" translate="label" type="text" sortOrder="10" showInDefault="1" showInWebsite="1" showInStore="1">
-                <label>Paramètres par défaut du bouton</label>
+                <label>Bouton de navigation</label>
                 <comment><![CDATA[Afficher ou masquer le bouton, modifier son texte.]]></comment>
 
                 <field id="show" sortOrder="1" type="select" showInDefault="1" showInWebsite="1" showInStore="1">
@@ -41,17 +41,14 @@
                 <field id="access_token" translate="label" type="text" sortOrder="2" showInDefault="1" showInWebsite="1" showInStore="1">
                     <label>Jeton d'accès</label>
                 </field>
-                <!-- <field id="api_secret" translate="label" type="password" sortOrder="2" showInDefault="1" showInWebsite="1" showInStore="1">
-                    <label>Secret API</label>
-                </field> -->
             </group>
 
             <group id="api_settings_advanced" translate="label" type="text" sortOrder="20" showInDefault="1" showInWebsite="1" showInStore="1">
                 <label>Avancé</label>
-                <!-- <field id="base_url" translate="label" type="text" sortOrder="1" showInDefault="1" showInWebsite="1" showInStore="1">
+                <field id="base_url" translate="label" type="text" sortOrder="1" showInDefault="1" showInWebsite="1" showInStore="1">
                     <label>URL de l'API</label>
                     <comment>Default: https://api.contestio.fr</comment>
-                </field> -->
+                </field>
                 <field id="base_url_iframe" translate="label" type="text" sortOrder="2" showInDefault="1" showInWebsite="1" showInStore="1">
                     <label>URL de l'iframe</label>
                     <comment>Default: https://plugin.staging.contestio.fr</comment>
