@@ -34,13 +34,15 @@ class Data extends AbstractHelper
 
     public function encryptDataBase64($data, $accessToken) {
         $method = 'AES-256-CBC';
-        $key = hash('sha256', $accessToken, true); // Génération de la clé
-        $iv = openssl_random_pseudo_bytes(openssl_cipher_iv_length($method)); // Génération d'un IV
+
+        // Generate key and iv
+        $key = hash('sha256', $accessToken, true);
+        $iv = openssl_random_pseudo_bytes(openssl_cipher_iv_length($method));
     
-        // Chiffrement des données
+        // Encrypt data
         $encrypted = openssl_encrypt($data, $method, $key, 0, $iv);
     
-        // Encodage des données et de l'IV en Base64
+        // Encode data and iv in Base64
         return base64_encode(json_encode([
             'iv' => base64_encode($iv),
             'data' => $encrypted,
@@ -49,69 +51,52 @@ class Data extends AbstractHelper
 
     public function callApi($userAgent, $endpoint, $method, $data = null)
     {
-        $baseUrl = $this->getApiBaseUrl();
-
-        if ($endpoint === 'me' && $method === 'GET') {
-            return $this->getMe();
-        }
-
-        if ($endpoint === 'pseudo' && $method === 'POST') {
-            $response = $this->handlePseudoUpdate($data);
-            if (!$response['success']) {
-                throw new \Exception($response['message']);
-                return;
-            }
-            $endpoint = 'v1/users/final/upsert';
-            $data = $response['data'];
-        }
-
-        $url = $baseUrl . '/' . $endpoint;
+        $url = $this->getApiBaseUrl() . '/' . $endpoint;
         
         $headers = [
             'Content-Type' => 'application/json',
-            // 'clientkey' => $this->scopeConfig->getValue('contestio_connect/api_settings/api_key'),
-            // 'clientsecret' => $this->scopeConfig->getValue('contestio_connect/api_settings/api_secret'),
-            // 'externalId' => $this->customerSession->getCustomerId(),
             'client-shop' => $this->scopeConfig->getValue('contestio_connect/api_settings/api_key'),
-            'client-customer-id' => $this->encryptDataBase64(
-                $this->customerSession->getCustomerId(),
-                $this->scopeConfig->getValue('contestio_connect/api_settings/access_token')
-            ),
-            'client-customer-email' => $this->encryptDataBase64(
-                $this->customerSession->getCustomer()->getEmail(),
-                $this->scopeConfig->getValue('contestio_connect/api_settings/access_token')
-            ),
             'clientuseragent' => $userAgent
         ];
 
-        $this->curl->setHeaders($headers); // Headers
-        
-        if ($method === 'POST' || $method === 'PUT' || $method === 'PATCH' || $method === 'DELETE') {
-            $this->curl->setOption(CURLOPT_POSTFIELDS, json_encode($data)); // Données POST
+        // Add customer id and email to headers
+        if ($this->customerSession->isLoggedIn()) {
+            $headers['client-customer-id'] = $this->encryptDataBase64(
+                $this->customerSession->getCustomerId(),
+                $this->scopeConfig->getValue('contestio_connect/api_settings/access_token')
+            );
+            $headers['client-customer-email'] = $this->encryptDataBase64(
+                $this->customerSession->getCustomer()->getEmail(),
+                $this->scopeConfig->getValue('contestio_connect/api_settings/access_token')
+            );
         }
 
-        $this->curl->setOption(CURLOPT_CUSTOMREQUEST, $method); // Méthode HTTP
+        // Set headers
+        $this->curl->setHeaders($headers);
+        
+        // Set data (used for POST - final user order observer)
+        if ($method === 'POST') {
+            $this->curl->setOption(CURLOPT_POSTFIELDS, json_encode($data));
+        }
 
-        $this->curl->setOption(CURLOPT_TIMEOUT, 5); // Timeout après 5 secondes
-        $this->curl->setOption(CURLOPT_CONNECTTIMEOUT, 3); // Timeout de connexion après 3 secondes
+        // Set method
+        $this->curl->setOption(CURLOPT_CUSTOMREQUEST, $method);
 
+        // Set timeout
+        $this->curl->setOption(CURLOPT_TIMEOUT, 5);
+        $this->curl->setOption(CURLOPT_CONNECTTIMEOUT, 3);
+
+        // Make request
         $this->curl->get($url);
 
-        $response = $this->curl->getBody(); // Réponse
-        $httpCode = $this->curl->getStatus(); // Code HTTP
+        $response = $this->curl->getBody(); // Response
+        $httpCode = $this->curl->getStatus(); // HTTP code
 
         if ($httpCode >= 200 && $httpCode < 300) {
-            if ($endpoint === 'v1/users/final/generate-token') {
-                $response = json_decode($response, true);
-                // Add apiurl to response
-                $response['apiurl'] = $this->getApiBaseUrl();
-
-                return $response;
-            }
-
-            // Else, return json decoded response
+            // Return json decoded response
             return json_decode($response, true);
         } else {
+            // Throw error
             throw new \Exception(
                 $response,
                 $httpCode

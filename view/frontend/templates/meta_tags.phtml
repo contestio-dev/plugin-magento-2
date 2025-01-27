@@ -3,14 +3,14 @@
 $viewModel = $block->getData('view_model');
 
 if ($viewModel->isContestioRoute() === false) {
-    // If not contestio route, do not load React app
-    return;
+  // If not contestio route, do not load React app
+  return;
 }
 
 try {
-    $metaData = $this->getMetaTags();
+  $metaData = $this->getMetaTags();
 } catch (Exception $e) {
-    $metaData = [];
+  $metaData = [];
 }
 
 // Card type

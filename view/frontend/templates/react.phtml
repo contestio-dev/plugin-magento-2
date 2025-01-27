@@ -88,7 +88,7 @@ $queryParams = $block->getQueryParams();
 
     window.addEventListener('message', async (event) => {
       if (event.origin === new URL(iframe.src).origin) {
-        const { type, loginCredentials, pathname } = event.data;
+        const { type, loginCredentials, pathname, redirectUrl } = event.data;
 
         if (type === 'login') {
           try {
@@ -118,7 +118,7 @@ $queryParams = $block->getQueryParams();
               }, '*');
             }
           } catch (error) {
-            console.log('Contestio - Login error', error);
+            console.error('Contestio - Login error', error);
 
             // Send the error to the iframe
             event.source.postMessage({
@@ -129,20 +129,27 @@ $queryParams = $block->getQueryParams();
               }
             }, '*');
           }
-        } else {
+        } else if (type === 'pathname') {
           // Replace 'l' variable from the current url with the pathname if it's different
           const url = new URL(window.location.href);
+
           if (url.searchParams.get('l') !== pathname) {
             // Delete the 'l' parameter
             url.searchParams.delete('l');
             if (pathname !== '' && pathname !== '/') {
               // Add the new parameter without encoding
               const newUrl = url.toString() + (url.toString().includes('?') ? '&' : '?') + 'l=' + pathname;
+
+              // Update the url
               history.pushState(null, null, newUrl);
             } else {
+              // Update the url
               history.pushState(null, null, url.toString());
             }
           }
+        } else if (type === 'redirect') {
+          // Redirect to the url
+          window.location.href = redirectUrl;
         }
       }
     });    

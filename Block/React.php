@@ -39,11 +39,11 @@ class React extends Template
 
     public function getQueryParams()
     {
-        // $shop = "contestio-beta-shopi.myshopify.com";
+        // Get shop and access token
         $shop =  $this->scopeConfig->getValue('contestio_connect/api_settings/api_key');
         $accessToken =  $this->scopeConfig->getValue('contestio_connect/api_settings/access_token');
         
-        // Récupération des données du client connecté
+        // Get customer data
         $customer = $this->customerSession->getCustomer();
         $customerId = $customer->getId();
         $customerEmail = $customer->getEmail();
@@ -51,17 +51,13 @@ class React extends Template
         $params = "?";
 
         if ($shop) {
-            $params .= "shop=" . urlencode($shop) . "&";
+            $params .= "shop=" . urlencode($shop);
         }
 
-        if ($customerId) {
-            // Hash customer id with access token
-            $params .= "customer_id=" . urlencode($this->apiHelper->encryptDataBase64($customerId, $accessToken)) . "&";
-        }
-
-        if ($customerEmail) {
-            // Hash customer email with access token
-            $params .= "customer_email=" . urlencode($this->apiHelper->encryptDataBase64($customerEmail, $accessToken));
+        if ($customerId && $customerEmail && $accessToken) {
+            // Hash customer id and email with access token
+            $params .= "&customer_id=" . urlencode($this->apiHelper->encryptDataBase64($customerId, $accessToken));
+            $params .= "&customer_email=" . urlencode($this->apiHelper->encryptDataBase64($customerEmail, $accessToken));
         }
 
         // Return the encoded params
@@ -85,7 +81,7 @@ class React extends Template
         );
 
         try {
-            // Récupération de la version du module
+            // Get module version from composer.json
             $modulePath = $this->componentRegistrar->getPath(
                 ComponentRegistrar::MODULE,
                 'Contestio_Connect'
@@ -93,11 +89,15 @@ class React extends Template
             $composerJson = json_decode(file_get_contents($modulePath . '/composer.json'), true);
             $metaData['version'] = $composerJson['version'] ?? null;
 
-            // Utiliser le helper API pour faire l'appel
-            $endpoint = 'v1/org/meta-tags/' . urlencode($currentUrl);
-            $method = 'GET';
-    
-            $response = $this->apiHelper->callApi($userAgent, $endpoint, $method, null);
+            // Get meta tags from Contestio
+            $response = $this->apiHelper->callApi(
+                $userAgent,
+                'v1/org/meta-tags/' . urlencode($currentUrl),
+                'GET',
+                null
+            );
+
+            return $response;
     
             if ($response && is_array($response)) {
                 $metaData = array_merge($metaData, $response);
