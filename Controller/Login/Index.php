@@ -9,8 +9,11 @@ use Magento\Customer\Model\Session;
 use Magento\Customer\Api\AccountManagementInterface;
 use Magento\Framework\Exception\EmailNotConfirmedException;
 use Magento\Framework\Exception\AuthenticationException;
+use Magento\Framework\App\CsrfAwareActionInterface;
+use Magento\Framework\App\Request\InvalidRequestException;
+use Magento\Framework\App\RequestInterface;
 
-class Post extends Action
+class Index extends Action implements CsrfAwareActionInterface
 {
     protected $resultJsonFactory;
     protected $customerSession;
@@ -31,6 +34,27 @@ class Post extends Action
     public function execute()
     {
         $resultJson = $this->resultJsonFactory->create();
+        
+        // Ajouter les en-têtes CORS
+        $resultJson->setHeader('Access-Control-Allow-Origin', '*');
+        $resultJson->setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
+        $resultJson->setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+        
+        // Gérer la requête OPTIONS (preflight)
+        if ($this->getRequest()->getMethod() === 'OPTIONS') {
+            return $resultJson;
+        }
+
+        // Get method
+        $method = $this->getRequest()->getMethod();
+
+        // Ensure the method is POST
+        if ($method !== 'POST') {
+            return $resultJson->setData([
+                'success' => false,
+                'message' => __('Method not allowed.')
+            ])->setHttpResponseCode(405);
+        }
 
         // Get POST data as JSON and decode it
         $content = $this->getRequest()->getContent();
@@ -70,5 +94,21 @@ class Post extends Action
                 'message' => __('An error occurred during login. Please try again later.')
             ])->setHttpResponseCode(500);
         }
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function createCsrfValidationException(RequestInterface $request): ?InvalidRequestException
+    {
+        return null;
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function validateForCsrf(RequestInterface $request): ?bool
+    {
+        return true;
     }
 }

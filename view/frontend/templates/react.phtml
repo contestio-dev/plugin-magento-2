@@ -51,7 +51,6 @@ $queryParams = $block->getQueryParams();
 
 <script>
   document.addEventListener('DOMContentLoaded', function() {
-    console.log('DOMContentLoaded');
     const mainContent = document.querySelector('#maincontent');
     const container = document.querySelector('.contestio-container');
     const iframe = document.querySelector('.contestio-iframe');
@@ -87,21 +86,62 @@ $queryParams = $block->getQueryParams();
       window.addEventListener('resize', adjustHeight);
     }
 
-    window.addEventListener('message', (event) => {
+    window.addEventListener('message', async (event) => {
       if (event.origin === new URL(iframe.src).origin) {
-        const { pathname } = event.data;
+        const { type, loginCredentials, pathname } = event.data;
 
-        // Replace 'l' variable from the current url with the pathname if it's different
-        const url = new URL(window.location.href);
-        if (url.searchParams.get('l') !== pathname) {
-          // Delete the 'l' parameter
-          url.searchParams.delete('l');
-          if (pathname !== '' && pathname !== '/') {
-            // Add the new parameter without encoding
-            const newUrl = url.toString() + (url.toString().includes('?') ? '&' : '?') + 'l=' + pathname;
-            history.pushState(null, null, newUrl);
-          } else {
-            history.pushState(null, null, url.toString());
+        if (type === 'login') {
+          try {
+            // Url = current url without query params
+            const url = window.location.href.includes('?') ? window.location.href.split('?')[0] : window.location.href;
+            const response = await fetch(url.endsWith('/') ? url + 'login' : url + '/login', {
+              method: 'POST',
+              body: JSON.stringify({
+                username: loginCredentials.username,
+                password: loginCredentials.password
+              }),
+            });
+
+            const data = await response.json();
+
+            // Refresh the page if the login is successful
+            if (data.success) {
+              window.location.reload();
+            } else {
+              // Send the error to the iframe
+              event.source.postMessage({
+                loginResponse: {
+                  success: false,
+                  message: data.message,
+                  data: data
+                }
+              }, '*');
+            }
+          } catch (error) {
+            console.log('Contestio - Login error', error);
+
+            // Send the error to the iframe
+            event.source.postMessage({
+              loginResponse: {
+                success: false,
+                message: "Erreur lors de la connexion",
+                data: error
+              }
+            }, '*');
+          }
+        } else {
+          // Replace 'l' variable from the current url with the pathname if it's different
+          const url = new URL(window.location.href);
+          if (url.searchParams.get('l') !== pathname) {
+            // Delete the 'l' parameter
+            url.searchParams.delete('l');
+            if (pathname !== '' && pathname !== '/') {
+              // Add the new parameter without encoding
+              const newUrl = url.toString() + (url.toString().includes('?') ? '&' : '?') + 'l=' + pathname;
+              history.pushState(null, null, newUrl);
+            } else {
+              history.pushState(null, null, url.toString());
+            }
           }
         }
       }
