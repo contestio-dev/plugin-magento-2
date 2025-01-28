@@ -50,36 +50,66 @@ $queryParams = $block->getQueryParams();
 </style>
 
 <script>
+  // Gestionnaire du clavier mobile
+  class KeyboardManager {
+    constructor(iframe) {
+      this.iframe = iframe;
+      this.lastHeight = window.visualViewport?.height || window.innerHeight;
+
+      if (window.visualViewport) {
+        window.visualViewport.addEventListener('resize', this.handleViewportResize.bind(this));
+      }
+    }
+
+    handleViewportResize(event) {
+      const currentHeight = window.visualViewport.height;
+      const heightDiff = Math.abs(this.lastHeight - currentHeight);
+      
+      // Scroll to the top if the height change
+      if (heightDiff > 20 && currentHeight > this.lastHeight) {
+        window.scrollTo({
+          top: 0,
+          behavior: 'smooth'
+        });
+      }
+      
+      this.lastHeight = currentHeight;
+    }
+  }
+
   document.addEventListener('DOMContentLoaded', function() {
     const mainContent = document.querySelector('#maincontent');
     const container = document.querySelector('.contestio-container');
     const iframe = document.querySelector('.contestio-iframe');
 
+    // Initialisation du gestionnaire de clavier
+    const keyboardManager = new KeyboardManager(iframe);
+
+    function adjustHeight() {
+      let offset = 0;
+
+      if (mainContent) {
+        offset = mainContent.offsetTop;
+      }
+
+      const windowHeight = window.innerHeight;
+      const newHeight = windowHeight - offset; // Remove the header/navbar height
+      
+      // Update the iframe height
+      container.style.height = `${newHeight}px`;
+    }
+
     // Get 'l' parameter from the current url
     const url = new URL(window.location.href);
     const l = url.searchParams.get('l');
 
-    let offset = 0;
+    // // Add the 'l' parameter to the iframe src (before the ?)
+    // if (l && l.length > 1) {
+    //   iframe.src = iframe.src.replace('?', l + '?');
+    // }
 
-    if (l && l.length > 1) {
-      // Add the 'l' parameter to the iframe src (before the ?)
-      iframe.src = iframe.src.replace('?', l + '?');
-    }
-
+    // Adjust the height initially
     if (container) {
-      function adjustHeight() {
-        if (mainContent) {
-          offset = mainContent.offsetTop;
-        }
-
-        const windowHeight = window.innerHeight;
-        const newHeight = windowHeight - offset; // Remove the header/navbar height
-        
-        // Update the iframe height
-        container.style.height = `${newHeight}px`;
-      }
-
-      // Adjust the height initially
       adjustHeight();
 
       // Adjust the height when the window is resized

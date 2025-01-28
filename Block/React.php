@@ -48,7 +48,20 @@ class React extends Template
         $customerId = $customer->getId();
         $customerEmail = $customer->getEmail();
 
-        $params = "?";
+        $params = "";
+
+        // Get l parameter from the current url
+        $l = $this->getRequest()->getParam('l');
+        if ($l && strlen($l) > 0 && $l !== "/") {
+            // Check if $l starts with /
+            if ($l[0] !== "/") {
+                $params .= "/";
+            }
+
+            $params .= urlencode($l);
+        }
+
+        $params .= "?";
 
         if ($shop) {
             $params .= "shop=" . urlencode($shop);
@@ -65,7 +78,7 @@ class React extends Template
         if ($currentQueryParams) {
             // Retirer le debug
             foreach ($currentQueryParams as $key => $value) {
-                if ($key !== 'shop' && $key !== 'customer_id' && $key !== 'customer_email') {
+                if ($key !== 'l' && $key !== 'shop' && $key !== 'customer_id' && $key !== 'customer_email') {
                     $params .= "&" . urlencode($key) . "=" . urlencode($value);
                 }
             }
