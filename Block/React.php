@@ -60,6 +60,17 @@ class React extends Template
             $params .= "&customer_email=" . urlencode($this->apiHelper->encryptDataBase64($customerEmail, $accessToken));
         }
 
+        // Get current query params
+        $currentQueryParams = $this->getRequest()->getParams();
+        if ($currentQueryParams) {
+            // Retirer le debug
+            foreach ($currentQueryParams as $key => $value) {
+                if ($key !== 'shop' && $key !== 'customer_id' && $key !== 'customer_email') {
+                    $params .= "&" . urlencode($key) . "=" . urlencode($value);
+                }
+            }
+        }
+
         // Return the encoded params
         return $params === "?" ? "" : $params;
     }

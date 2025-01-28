@@ -18,7 +18,13 @@ class RouteChecker implements ArgumentInterface
         $pathInfo = trim($this->request->getPathInfo(), '/');
         $pathParts = explode('/', $pathInfo);
         
-        // Vérifier si 'contestio' est présent dans l'URL, en ignorant le préfixe de langue potentiel
-        return in_array('contestio', $pathParts);
+        // Check if the last part of the path is 'contestio'
+        if (end($pathParts) !== 'contestio') {
+            return false;
+        }
+        
+        // Check if 'contestio' is present only once in the path
+        $counts = array_count_values($pathParts);
+        return ($counts['contestio'] ?? 0) === 1;
     }
 }
