@@ -50,7 +50,7 @@ $queryParams = $block->getQueryParams();
 </style>
 
 <script>
-  // Gestionnaire du clavier mobile
+  // Mobile keyboard manager
   class KeyboardManager {
     constructor(iframe) {
       this.iframe = iframe;
@@ -77,12 +77,32 @@ $queryParams = $block->getQueryParams();
     }
   }
 
+  const verbose = false;
+
+  const logger = {
+    log: function(message, data) {
+      if (verbose) {
+        console.log('Contestio - ' + message, data);
+      }
+    },
+    warn: function(message, data) {
+      if (verbose) {
+        console.warn('Contestio - ' + message, data);
+      }
+    },
+    error: function(message, data) {
+      if (verbose) {
+        console.error('Contestio - ' + message, data);
+      }
+    }
+  }
+
   document.addEventListener('DOMContentLoaded', function() {
     const mainContent = document.querySelector('#maincontent');
     const container = document.querySelector('.contestio-container');
     const iframe = document.querySelector('.contestio-iframe');
 
-    // Initialisation du gestionnaire de clavier
+    // Initialize keyboard manager
     const keyboardManager = new KeyboardManager(iframe);
 
     function adjustHeight() {
@@ -99,15 +119,6 @@ $queryParams = $block->getQueryParams();
       container.style.height = `${newHeight}px`;
     }
 
-    // Get 'l' parameter from the current url
-    const url = new URL(window.location.href);
-    const l = url.searchParams.get('l');
-
-    // // Add the 'l' parameter to the iframe src (before the ?)
-    // if (l && l.length > 1) {
-    //   iframe.src = iframe.src.replace('?', l + '?');
-    // }
-
     // Adjust the height initially
     if (container) {
       adjustHeight();
@@ -116,84 +127,142 @@ $queryParams = $block->getQueryParams();
       window.addEventListener('resize', adjustHeight);
     }
 
-    window.addEventListener('message', async (event) => {
-      if (event.origin === new URL(iframe.src).origin) {
+    // Function to create and configure the message listener
+    function createMessageListener(iframe) {
+      const messageHandler = async (event) => {
+        // Strict security check
+        const iframeOrigin = new URL(iframe.src).origin;
+        if (!event.origin || event.origin !== iframeOrigin) {
+          logger.warn('Message received from unauthorized origin:', event.origin);
+          return;
+        }
+
+        // Check that event.data exists and is an object
+        if (!event.data || typeof event.data !== 'object') {
+          logger.warn('Invalid message received:', event.data);
+          return;
+        }
+
         const {
           type,
-          loginCredentials, // Login route
-          pathname, // Update the url with the pathname
-          redirectUrl, // Redirect to the url
-          clipboardText // Copy the text to the clipboard
+          loginCredentials,
+          pathname,
+          redirectUrl,
+          clipboardText
         } = event.data;
 
-        if (type === 'login') {
-          try {
-            // Url = current url without query params
-            const url = window.location.href.includes('?') ? window.location.href.split('?')[0] : window.location.href;
-            const response = await fetch(url.endsWith('/') ? url + 'login' : url + '/login', {
-              method: 'POST',
-              body: JSON.stringify({
-                username: loginCredentials.username,
-                password: loginCredentials.password
-              }),
-            });
+        try {
+          switch (type) {
+            case 'login':
+              // Url = current url without query params
+              const url = window.location.href.includes('?') 
+                ? window.location.href.split('?')[0] 
+                : window.location.href;
+              
+              const loginUrl = url.endsWith('/') ? url + 'login' : url + '/login';
+              logger.log('Attempting login to:', loginUrl);
 
-            const data = await response.json();
+              const response = await fetch(loginUrl, {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                  username: loginCredentials.username,
+                  password: loginCredentials.password
+                }),
+              });
 
-            // Refresh the page if the login is successful
-            if (data.success) {
-              window.location.reload();
-            } else {
-              // Send the error to the iframe
-              event.source.postMessage({
-                loginResponse: {
-                  success: false,
-                  message: data.message,
-                  data: data
-                }
-              }, '*');
-            }
-          } catch (error) {
-            console.error('Contestio - Login error', error);
+              const data = await response.json();
 
-            // Send the error to the iframe
+              if (data.success) {
+                window.location.reload();
+              } else {
+                event.source.postMessage({
+                  loginResponse: {
+                    success: false,
+                    message: data.message,
+                    data: data
+                  }
+                }, iframeOrigin);
+              }
+              break;
+
+            case 'pathname':
+              const currentUrl = new URL(window.location.href);
+              currentUrl.search = '';
+              currentUrl.searchParams.delete('l');
+              currentUrl.searchParams.delete('u');
+
+              let newUrl = currentUrl.toString();
+              if (pathname !== '' && pathname !== '/') {
+                newUrl += (newUrl.includes('?') ? '&' : '?') + 'l=' + pathname;
+              }
+
+              logger.log('Update URL to:', newUrl);
+              history.pushState(null, null, newUrl);
+              break;
+
+            case 'redirect':
+              logger.log('Redirect to:', redirectUrl);
+              window.location.href = redirectUrl;
+              break;
+
+            case 'clipboard':
+              logger.log('Copy to clipboard:', clipboardText);
+              await navigator.clipboard.writeText(clipboardText);
+              break;
+
+            default:
+              logger.warn('Unknown message type:', type);
+          }
+        } catch (error) {
+          logger.error('Error processing message:', error);
+          
+          if (type === 'login') {
             event.source.postMessage({
               loginResponse: {
                 success: false,
-                message: "Erreur lors de la connexion",
-                data: error
+                message: "Erreur lors du traitement de la requête",
+                error: error.message
               }
-            }, '*');
+            }, iframeOrigin);
           }
-        } else if (type === 'pathname') {
-          // Replace 'l' variable from the current url with the pathname if it's different
-          const url = new URL(window.location.href);
-
-          // Delete url.search
-          url.search = '';
-          
-          // Delete l parameter
-          url.searchParams.delete('l');
-          url.searchParams.delete('u');
-
-          if (pathname !== '' && pathname !== '/') {
-            // Add the new parameter without encoding
-            const newUrl = url.toString() + (url.toString().includes('?') ? '&' : '?') + 'l=' + pathname;
-
-            // Update the url
-            history.pushState(null, null, newUrl);
-          } else {
-            // Update the url
-            history.pushState(null, null, url.toString());
-          }
-        } else if (type === 'redirect') {
-          // Redirect to the url
-          window.location.href = redirectUrl;
-        } else if (type === 'clipboard') {
-          // Copy the text to the clipboard
-          navigator.clipboard.writeText(clipboardText);
         }
+      };
+
+      // Ajouter le listener
+      window.addEventListener('message', messageHandler);
+
+      // Retourner une fonction de cleanup
+      return () => {
+        logger.log('Cleaning up message listener');
+        window.removeEventListener('message', messageHandler);
+      };
+    }
+
+    // Gérer le cycle de vie du listener
+    let cleanup = null;
+
+    function setupListener() {
+      logger.log('Setting up message listener');
+      // Clean up old listener if it exists
+      if (cleanup) {
+        cleanup();
       }
-    });    
+      // Create a new listener
+      cleanup = createMessageListener(iframe);
+    }
+
+    // Set up the listener initially
+    setupListener();
+
+    // Reconfigure the listener when the page becomes visible
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'visible') {
+        logger.log('Visibility changed to visible, reconfiguring listener');
+        setupListener();
+      }
+    });
   });
 </script>
