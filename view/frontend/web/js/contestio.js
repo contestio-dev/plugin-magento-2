@@ -1,7 +1,7 @@
-define(['jquery'], function($) {
+(function () {
   'use strict';
 
-  console.log('contestio.js 1 loaded', $(window));
+  console.log('contestio.js loaded');
 
   const verbose = true;
   
@@ -22,8 +22,6 @@ define(['jquery'], function($) {
       }
     }
   }
-  
-  logger.log('contestio.js 2 loaded');
 
   class KeyboardManager {
     constructor(iframe) {
@@ -220,4 +218,4 @@ define(['jquery'], function($) {
       }
     });
   });
-});
+})();
