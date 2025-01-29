@@ -49,9 +49,16 @@
     }
   }
 
-  document.addEventListener('DOMContentLoaded', function() {
+  // Remplacer le DOMContentLoaded par une fonction d'initialisation
+  function init() {
+    logger.log('contestio.js - init');
     const container = document.querySelector('.contestio-container');
     const iframe = document.querySelector('.contestio-iframe');
+
+    if (!container || !iframe) {
+      logger.warn('contestio.js - container or iframe not found');
+      return; // Sortir si les éléments ne sont pas présents
+    }
 
     // Initialize keyboard manager
     new KeyboardManager(iframe);
@@ -72,13 +79,11 @@
       containerElt.style.height = `${newHeight}px`;
     }
 
-    // Adjust the height initially
-    if (container) {
-      adjustHeight();
+    // Ajuster la hauteur immédiatement
+    adjustHeight();
 
-      // Adjust the height when the window is resized
-      window.addEventListener('resize', adjustHeight);
-    }
+    // Ajuster la hauteur lors du redimensionnement
+    window.addEventListener('resize', adjustHeight);
 
     // Function to create and configure the message listener
     function createMessageListener() {
@@ -218,5 +223,35 @@
         setupListener();
       }
     });
-  });
+  }
+
+  // Exécuter l'initialisation immédiatement
+  init();
+
+  // Attendre que le document soit prêt avant d'initialiser l'observateur
+  if (document.body) {
+    setupObserver();
+  } else {
+    document.addEventListener('DOMContentLoaded', setupObserver);
+  }
+
+  function setupObserver() {
+    const observer = new MutationObserver((mutations) => {
+      for (const mutation of mutations) {
+        if (mutation.addedNodes.length) {
+          const container = document.querySelector('.contestio-container');
+          if (container) {
+            init();
+            break;
+          }
+        }
+      }
+    });
+
+    // Observer le corps du document pour les changements
+    observer.observe(document.body, {
+      childList: true,
+      subtree: true
+    });
+  }
 })();
