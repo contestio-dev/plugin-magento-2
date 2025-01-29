@@ -3,7 +3,7 @@
 
   console.log('contestio.js loaded');
 
-  const verbose = true;
+  const verbose = false;
   
   const logger = {
     log: function(message, data) {
@@ -81,10 +81,11 @@
     }
 
     // Function to create and configure the message listener
-    function createMessageListener(iframe) {
+    function createMessageListener() {
       const messageHandler = async (event) => {
+        const iframeElt = document.querySelector('.contestio-iframe');
         // Strict security check
-        const iframeOrigin = new URL(iframe.src).origin;
+        const iframeOrigin = new URL(iframeElt.src).origin;
         if (!event.origin || event.origin !== iframeOrigin) {
           logger.warn('Message received from unauthorized origin:', event.origin);
           return;
@@ -204,7 +205,7 @@
         cleanup();
       }
       // Create a new listener
-      cleanup = createMessageListener(iframe);
+      cleanup = createMessageListener();
     }
 
     // Set up the listener initially
