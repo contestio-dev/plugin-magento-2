@@ -49,15 +49,22 @@
     }
   }
 
-  // Remplacer le DOMContentLoaded par une fonction d'initialisation
+  // Remplacer ces fonctions par une seule initialisation
   function init() {
+    // Vérifier si l'initialisation a déjà été faite
+    if (window.contestioInitialized) {
+      logger.log('contestio.js - already initialized');
+      return;
+    }
+    window.contestioInitialized = true;
+
     logger.log('contestio.js - init');
     const container = document.querySelector('.contestio-container');
     const iframe = document.querySelector('.contestio-iframe');
 
     if (!container || !iframe) {
       logger.warn('contestio.js - container or iframe not found');
-      return; // Sortir si les éléments ne sont pas présents
+      return;
     }
 
     // Initialize keyboard manager
@@ -225,33 +232,10 @@
     });
   }
 
-  // Exécuter l'initialisation immédiatement
-  init();
-
-  // Attendre que le document soit prêt avant d'initialiser l'observateur
-  if (document.body) {
-    setupObserver();
+  // Modifier la partie d'initialisation
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
   } else {
-    document.addEventListener('DOMContentLoaded', setupObserver);
-  }
-
-  function setupObserver() {
-    const observer = new MutationObserver((mutations) => {
-      for (const mutation of mutations) {
-        if (mutation.addedNodes.length) {
-          const container = document.querySelector('.contestio-container');
-          if (container) {
-            init();
-            break;
-          }
-        }
-      }
-    });
-
-    // Observer le corps du document pour les changements
-    observer.observe(document.body, {
-      childList: true,
-      subtree: true
-    });
+    init();
   }
 })();
