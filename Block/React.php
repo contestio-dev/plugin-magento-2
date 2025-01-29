@@ -58,7 +58,7 @@ class React extends Template
                 $params .= "/";
             }
 
-            $params .= urlencode($l);
+            $params .= $l;
         }
 
         $params .= "?";
