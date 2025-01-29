@@ -3,6 +3,7 @@
     <head>
         <link rel="stylesheet" src="Contestio_Connect::css/contestio.css"/>
         <script src="Contestio_Connect::js/contestio.js"/>
+        <attribute name="defer" value="true"/>
     </head>
 
     <body>

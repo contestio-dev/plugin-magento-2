@@ -51,10 +51,20 @@
 
   // Remplacer ces fonctions par une seule initialisation
   function init() {
-    // Vérifier si l'initialisation a déjà été faite
+    // Au lieu de bloquer complètement la réinitialisation, on va la forcer si nécessaire
     if (window.contestioInitialized) {
-      logger.log('contestio.js - already initialized');
-      return;
+      // On vérifie si les éléments nécessaires sont présents
+      const container = document.querySelector('.contestio-container');
+      const iframe = document.querySelector('.contestio-iframe');
+      
+      if (container && iframe) {
+        // Si les éléments sont présents, on force la réinitialisation
+        logger.log('contestio.js - reinitializing');
+        window.contestioInitialized = false;
+      } else {
+        logger.log('contestio.js - skipping initialization (no elements found)');
+        return;
+      }
     }
     window.contestioInitialized = true;
 
@@ -234,10 +244,13 @@
     });
   }
 
-  // Modifier la partie d'initialisation
+  // Modifier la partie d'initialisation pour écouter aussi les changements de navigation
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', init);
   } else {
     init();
   }
+
+  // Ajouter un écouteur pour le changement de page avec History API
+  window.addEventListener('popstate', init);
 })();
