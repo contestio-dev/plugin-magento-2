@@ -73,11 +73,13 @@
     function adjustHeight() {
       const mainContentElt = document.querySelector('#maincontent');
       const containerElt = document.querySelector('.contestio-container');
-      let offset = 0;
 
-      if (mainContentElt) {
-        offset = mainContentElt.offsetTop;
+      if (!mainContentElt || !containerElt) {
+        logger.warn('contestio.js - mainContentElt or containerElt not found');
+        return;
       }
+
+      let offset = mainContentElt.offsetTop || 0;
 
       const windowHeight = window.innerHeight;
       const newHeight = windowHeight - offset; // Remove the header/navbar height
