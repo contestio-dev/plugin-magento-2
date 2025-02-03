@@ -126,7 +126,8 @@
           loginCredentials,
           pathname,
           redirectUrl,
-          clipboardText
+          clipboardText,
+          cookie
         } = event.data;
 
         try {
@@ -189,6 +190,32 @@
             case 'clipboard':
               logger.log('Copy to clipboard:', clipboardText);
               await navigator.clipboard.writeText(clipboardText);
+              break;
+
+            case 'createCookie':
+              // Create cookie
+              document.cookie = `${cookie.name}=${cookie.value}; expires=${cookie.expires}; path=${cookie.path}`;
+              logger.log('Create cookie:', cookie, `${cookie.name}=${cookie.value}; expires=${cookie.expires}; path=${cookie.path}`, document.cookie);
+              break;
+
+            case 'getCookie':
+              // Get cookie
+              const cookieValue = document.cookie.split('; ').find(row => row.startsWith(`${cookie.name}=`))?.split('=')[1];
+              logger.log('Get cookie:', cookie, cookieValue);
+              // Send response to the iframe
+              event.source.postMessage({
+                getCookieResponse: {
+                  success: cookieValue ? true : false,
+                  cookieName: cookie.name,
+                  cookieValue: cookieValue
+                }
+              }, iframeOrigin);
+              break;
+
+            case 'deleteCookie':
+              // Delete cookie
+              document.cookie = `${cookie.name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;`;
+              logger.log('Delete cookie:', cookie, document.cookie);
               break;
 
             default:
