@@ -51,7 +51,7 @@
                 </field>
                 <field id="base_url_iframe" translate="label" type="text" sortOrder="2" showInDefault="1" showInWebsite="1" showInStore="1">
                     <label>URL de l'iframe</label>
-                    <comment>Default: https://plugin.staging.contestio.fr</comment>
+                    <comment>Default: https://plugin.contestio.fr</comment>
                 </field>
             </group>
         </section>

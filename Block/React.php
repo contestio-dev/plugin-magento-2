@@ -34,7 +34,7 @@ class React extends Template
     public function getIframeUrl()
     {
         $baseUrl = $this->scopeConfig->getValue('contestio_connect/api_settings_advanced/base_url_iframe');
-        return $baseUrl ? $baseUrl : "https://plugin.staging.contestio.fr";
+        return $baseUrl ? $baseUrl : "https://plugin.contestio.fr";
     }
 
     public function getQueryParams()
@@ -58,7 +58,7 @@ class React extends Template
                 $params .= "/";
             }
 
-            $params .= urlencode($l);
+            $params .= $l;
         }
 
         $params .= "?";
