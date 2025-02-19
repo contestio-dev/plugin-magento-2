@@ -59,17 +59,21 @@ document.addEventListener('DOMContentLoaded', function() {
         currentSrc.searchParams.append('customer_id', data.customer_id);
         currentSrc.searchParams.append('customer_email', data.customer_email);
         iframe.src = currentSrc.toString();
-      }
-      
-      // Wait for the iframe to load
-      iframe.onload = function() {
+        
+        // Wait for the iframe to load
+        iframe.onload = function() {
+          loading.style.display = 'none';
+          iframe.classList.remove('contestio-hidden');
+        };
+      } else {
         loading.style.display = 'none';
         iframe.classList.remove('contestio-hidden');
-      };
+      }
+      
     })
     .catch(error => {
       loading.style.display = 'none';
-      container.classList.add('loaded');
+      iframe.classList.remove('contestio-hidden');
       console.error('Contestio error:', error);
     });
 });
