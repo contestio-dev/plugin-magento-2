@@ -39,14 +39,8 @@ class React extends Template
 
     public function getQueryParams()
     {
-        // Get shop and access token
+        // Get shop
         $shop =  $this->scopeConfig->getValue('contestio_connect/api_settings/api_key');
-        $accessToken =  $this->scopeConfig->getValue('contestio_connect/api_settings/access_token');
-        
-        // Get customer data
-        $customer = $this->customerSession->getCustomer();
-        $customerId = $customer->getId();
-        $customerEmail = $customer->getEmail();
 
         $params = "";
 
@@ -67,16 +61,9 @@ class React extends Template
             $params .= "shop=" . urlencode($shop);
         }
 
-        if ($customerId && $customerEmail && $accessToken) {
-            // Hash customer id and email with access token
-            $params .= "&customer_id=" . urlencode($this->apiHelper->encryptDataBase64($customerId, $accessToken));
-            $params .= "&customer_email=" . urlencode($this->apiHelper->encryptDataBase64($customerEmail, $accessToken));
-        }
-
         // Get current query params
         $currentQueryParams = $this->getRequest()->getParams();
         if ($currentQueryParams) {
-            // Retirer le debug
             foreach ($currentQueryParams as $key => $value) {
                 if ($key !== 'l' && $key !== 'shop' && $key !== 'customer_id' && $key !== 'customer_email') {
                     $params .= "&" . urlencode($key) . "=" . urlencode($value);

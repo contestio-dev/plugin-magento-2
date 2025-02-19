@@ -44,4 +44,13 @@ if (isset($metaData['siteName'])) {
   echo "<meta property='og:site_name' content='".$metaData['siteName']."'>";
   echo "<meta property='twitter:site' content='".$metaData['siteName']."'>";
 }
+
+// Custom JS - CSS
+if (isset($metaData['customJS'])) {
+  echo "<script>".$metaData['customJS']."</script>";
+}
+if (isset($metaData['customCSS'])) {
+  echo "<style>".$metaData['customCSS']."</style>";
+}
+
 ?>
