@@ -13,77 +13,45 @@ $queryParams = $block->getQueryParams();
 
 ?>
 
-<style>
-  .contestio-container {
-    display: none;
-  }
-  
-  .contestio-container.loaded {
-    display: block;
-  }
+<div class="contestio-container">
+  <div class="contestio-loading" id="contestio-loading"></div>
 
-  /* Loading spinner */
-  .contestio-loading {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-  }
-
-  .contestio-loading::after {
-    content: '';
-    width: 25px;
-    height: 25px;
-    border: 3px solid #f3f3f3;
-    border-top: 3px solid #555;
-    border-radius: 50%;
-    animation: spin 1s linear infinite;
-  }
-
-  @keyframes spin {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
-  }
-</style>
-
-<div class="contestio-loading" id="contestio-loading"></div>
-<div class="contestio-container" id="contestio-container">
   <iframe
-    id="contestio-iframe"
-    src="<?php echo $iframeUrl; ?><?php echo $queryParams; ?>"
-    width="100%"
-    height="100%"
-    frameborder="0"
-    allowfullscreen
-    class="contestio-iframe">
-  </iframe>
+  id="contestio-iframe"
+  src="<?php echo $iframeUrl; ?><?php echo $queryParams; ?>"
+  width="100%"
+  height="100%"
+  frameborder="0"
+  allowfullscreen
+  class="contestio-iframe contestio-hidden">
+</iframe>
 </div>
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    const container = document.getElementById('contestio-container');
-    const loading = document.getElementById('contestio-loading');
-    const iframe = document.getElementById('contestio-iframe');
+  const loading = document.getElementById('contestio-loading');
+  const iframe = document.getElementById('contestio-iframe');
 
-    fetch('/contestio/ajax/customerData')
-        .then(response => response.json())
-        .then(data => {
-            if (data.customer_id && data.customer_email) {
-                const currentSrc = new URL(iframe.src);
-                currentSrc.searchParams.append('customer_id', data.customer_id);
-                currentSrc.searchParams.append('customer_email', data.customer_email);
-                iframe.src = currentSrc.toString();
-            }
-            
-            // Wait for the iframe to load
-            iframe.onload = function() {
-                loading.style.display = 'none';
-                container.classList.add('loaded');
-            };
-        })
-        .catch(error => {
-            loading.style.display = 'none';
-            container.classList.add('loaded');
-            console.error('Erreur lors de la récupération des données client:', error);
-        });
+  fetch('/contestio/ajax/customerData')
+    .then(response => response.json())
+    .then(data => {
+      if (data.customer_id && data.customer_email) {
+        const currentSrc = new URL(iframe.src);
+        currentSrc.searchParams.append('customer_id', data.customer_id);
+        currentSrc.searchParams.append('customer_email', data.customer_email);
+        iframe.src = currentSrc.toString();
+      }
+      
+      // Wait for the iframe to load
+      iframe.onload = function() {
+        loading.style.display = 'none';
+        iframe.classList.remove('contestio-hidden');
+      };
+    })
+    .catch(error => {
+      loading.style.display = 'none';
+      container.classList.add('loaded');
+      console.error('Contestio error:', error);
+    });
 });
 </script>
