@@ -13,23 +13,6 @@
   display: none;
 }
 
-/* Enlarge the container */
-main#maincontent  {
-  max-width: 100% !important;
-  padding: 0 !important;
-  margin: 0 !important;
-}
-
-/* Make the container flex */
-.page-main > .columns,
-.page-main > .columns > .column.main {
-  display: flex !important;
-  width: 100% !important;
-  max-width: 100% !important;
-  padding: 0 !important;
-  margin: 0 !important;
-}
-
 /* Loading spinner */
 .contestio-loading {
   width: 100%;
@@ -45,10 +28,10 @@ main#maincontent  {
   border: 3px solid #f3f3f3;
   border-top: 3px solid #555;
   border-radius: 50%;
-  animation: spin 1s linear infinite;
+  animation: contestio-spin 1s linear infinite;
 }
 
-@keyframes spin {
+@keyframes contestio-spin {
   0% { transform: rotate(0deg); }
   100% { transform: rotate(360deg); }
 }
