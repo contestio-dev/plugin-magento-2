@@ -51,6 +51,18 @@ document.addEventListener('DOMContentLoaded', function() {
   const loading = document.getElementById('contestio-loading');
   const iframe = document.getElementById('contestio-iframe');
 
+  const showIframe = () => {
+    loading.style.display = 'none';
+    iframe.classList.remove('contestio-hidden');
+  }
+  
+  // Security timeout
+  const timeoutDuration = 2000; // 2 seconds
+  const timeoutId = setTimeout(() => {
+    console.log('Contestio: Timeout reached, displaying iframe');
+    showIframe();
+  }, timeoutDuration);
+
   fetch('/contestio/ajax/customerData')
     .then(response => response.json())
     .then(data => {
@@ -62,18 +74,17 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // Wait for the iframe to load
         iframe.onload = function() {
-          loading.style.display = 'none';
-          iframe.classList.remove('contestio-hidden');
+          clearTimeout(timeoutId); // Cancel the timeout if the iframe is loaded
+          showIframe();
         };
       } else {
-        loading.style.display = 'none';
-        iframe.classList.remove('contestio-hidden');
+        clearTimeout(timeoutId);
+        showIframe();
       }
-      
     })
     .catch(error => {
-      loading.style.display = 'none';
-      iframe.classList.remove('contestio-hidden');
+      clearTimeout(timeoutId);
+      showIframe();
       console.error('Contestio error:', error);
     });
 });
