@@ -48,12 +48,14 @@ $queryParams = $block->getQueryParams();
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-  const loading = document.getElementById('contestio-loading');
-  const iframe = document.getElementById('contestio-iframe');
 
   const showIframe = () => {
+    const loading = document.getElementById('contestio-loading');
+    const iframe = document.getElementById('contestio-iframe');
+
     loading.style.display = 'none';
     iframe.classList.remove('contestio-hidden');
+    console.log('Contestio: Iframe displayed');
   }
   
   // Security timeout
@@ -66,6 +68,8 @@ document.addEventListener('DOMContentLoaded', function() {
   fetch('/contestio/ajax/customerData')
     .then(response => response.json())
     .then(data => {
+      const iframe = document.getElementById('contestio-iframe');
+
       if (data.customer_id && data.customer_email) {
         const currentSrc = new URL(iframe.src);
         currentSrc.searchParams.append('customer_id', data.customer_id);
