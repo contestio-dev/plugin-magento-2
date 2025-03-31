@@ -47,8 +47,8 @@ $queryParams = $block->getQueryParams();
 </div>
 
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-  console.log('Contestio: DOM Content Loaded');
+const initContestio = () => {
+  console.log('Contestio: Initializing');
 
   const showIframe = () => {
     const loading = document.getElementById('contestio-loading');
@@ -67,7 +67,7 @@ document.addEventListener('DOMContentLoaded', function() {
   }
   
   // Security timeout
-  const timeoutDuration = 2000; // 2 seconds
+  const timeoutDuration = 2000;
   const timeoutId = setTimeout(() => {
     console.log('Contestio: Timeout reached, displaying iframe');
     showIframe();
@@ -117,5 +117,12 @@ document.addEventListener('DOMContentLoaded', function() {
     }).finally(() => {
       console.log('Contestio: Fetching customer data finished');
     });
-});
+}
+
+// Exécuter immédiatement si le DOM est déjà chargé
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', initContestio);
+} else {
+  initContestio();
+}
 </script>
