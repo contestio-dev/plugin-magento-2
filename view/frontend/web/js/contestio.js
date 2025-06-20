@@ -193,9 +193,11 @@
               break;
 
             case 'createCookie':
-              // Create cookie
-              document.cookie = `${cookie.name}=${cookie.value}; expires=${cookie.expires}; path=${cookie.path}`;
-              logger.log('Create cookie:', cookie, `${cookie.name}=${cookie.value}; expires=${cookie.expires}; path=${cookie.path}`, document.cookie);
+              // Create cookie with SameSite=None for Safari iOS iframe support
+              const isHttps = window.location.protocol === 'https:';
+              const cookieStr = `${cookie.name}=${cookie.value}; expires=${cookie.expires}; path=${cookie.path || '/'}; SameSite=None${isHttps ? '; Secure' : ''}`;
+              document.cookie = cookieStr;
+              logger.log('Create cookie:', cookie, cookieStr, document.cookie);
               break;
 
             case 'getCookie':
@@ -213,9 +215,11 @@
               break;
 
             case 'deleteCookie':
-              // Delete cookie
-              document.cookie = `${cookie.name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;`;
-              logger.log('Delete cookie:', cookie, document.cookie);
+              // Delete cookie with same SameSite attributes
+              const isHttpsDelete = window.location.protocol === 'https:';
+              const deleteCookieStr = `${cookie.name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=${cookie.path || '/'}; SameSite=None${isHttpsDelete ? '; Secure' : ''}`;
+              document.cookie = deleteCookieStr;
+              logger.log('Delete cookie:', cookie, deleteCookieStr, document.cookie);
               break;
 
             default:
