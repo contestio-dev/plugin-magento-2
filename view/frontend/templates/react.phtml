@@ -15,15 +15,15 @@ $queryParams = $block->getQueryParams();
 
 <style>
   /* Enlarge the container */
-  main#maincontent  {
+  main#maincontent {
     padding: 0 !important;
     max-width: 1400px !important;
     margin: 0 auto !important;
   }
 
   /* Make the container flex */
-  .page-main > .columns,
-  .page-main > .columns > .column.main {
+  .page-main>.columns,
+  .page-main>.columns>.column.main {
     display: flex !important;
     width: 100% !important;
     max-width: 100% !important;
@@ -35,83 +35,77 @@ $queryParams = $block->getQueryParams();
 <div class="contestio-container">
   <div class="contestio-loading" id="contestio-loading"></div>
 
-  <iframe
-  id="contestio-iframe"
-  src="<?php echo $iframeUrl; ?><?php echo $queryParams; ?>"
-  width="100%"
-  height="100%"
-  frameborder="0"
-  allowfullscreen
-  class="contestio-iframe contestio-hidden">
-</iframe>
+  <iframe id="contestio-iframe" src="<?php echo $iframeUrl; ?><?php echo $queryParams; ?>" width="100%" height="100%"
+    frameborder="0" allowfullscreen crossorigin="anonymous" class="contestio-iframe contestio-hidden">
+  </iframe>
 </div>
 
 <script>
-if (typeof window.initContestio === 'undefined') {
-  window.initContestio = () => {
-    console.log('Contestio: Initializing');
+  if (typeof window.initContestio === 'undefined') {
+    window.initContestio = () => {
+      console.log('Contestio: Initializing');
 
-    const showIframe = () => {
-      const loading = document.getElementById('contestio-loading');
-      const iframe = document.getElementById('contestio-iframe');
-      
-      if (!loading || !iframe) {
-        console.error('Contestio: Elements not found', { loading, iframe });
-        return;
-      }
-
-      loading.style.display = 'none';
-      iframe.classList.remove('contestio-hidden');
-    }
-    
-    // Security timeout
-    const timeoutDuration = 2000;
-    const timeoutId = setTimeout(() => {
-      showIframe();
-    }, timeoutDuration);
-
-    fetch('/contestio/ajax/customerData')
-      .then(response => {
-        return response.json();
-      })
-      .then(data => {
+      const showIframe = () => {
+        const loading = document.getElementById('contestio-loading');
         const iframe = document.getElementById('contestio-iframe');
 
-        if (data.customer_id && data.customer_email) {
-          const currentSrc = new URL(iframe.src);
-          currentSrc.searchParams.append('customer_id', data.customer_id);
-          currentSrc.searchParams.append('customer_email', data.customer_email);
-          
-          // Timeout spécifique pour les utilisateurs connectés
-          const loginTimeoutId = setTimeout(() => {
+        if (!loading || !iframe) {
+          console.error('Contestio: Elements not found', { loading, iframe });
+          return;
+        }
+
+        loading.style.display = 'none';
+        iframe.classList.remove('contestio-hidden');
+      }
+
+      // Security timeout
+      const timeoutDuration = 2000;
+      const timeoutId = setTimeout(() => {
+        showIframe();
+      }, timeoutDuration);
+
+      fetch('/contestio/ajax/customerData')
+        .then(response => {
+          return response.json();
+        })
+        .then(data => {
+          const iframe = document.getElementById('contestio-iframe');
+
+          if (data.customer_id && data.customer_email) {
+            const currentSrc = new URL(iframe.src);
+            currentSrc.searchParams.append('customer_id', data.customer_id);
+            currentSrc.searchParams.append('customer_email', data.customer_email);
+
+            // Timeout spécifique pour les utilisateurs connectés
+            const loginTimeoutId = setTimeout(() => {
+              clearTimeout(timeoutId);
+              showIframe();
+            }, 3000); // 3 secondes
+
+            iframe.onload = function () {
+              clearTimeout(timeoutId);
+              clearTimeout(loginTimeoutId);
+              showIframe();
+            };
+
+            iframe.src = currentSrc.toString();
+          } else {
             clearTimeout(timeoutId);
             showIframe();
-          }, 3000); // 3 secondes
-          
-          iframe.onload = function() {
-            clearTimeout(timeoutId);
-            clearTimeout(loginTimeoutId);
-            showIframe();
-          };
-          
-          iframe.src = currentSrc.toString();
-        } else {
+          }
+        })
+        .catch(error => {
+          console.error('Contestio error:', error);
           clearTimeout(timeoutId);
           showIframe();
-        }
-      })
-      .catch(error => {
-        console.error('Contestio error:', error);
-        clearTimeout(timeoutId);
-        showIframe();
-      });
+        });
+    }
   }
-}
 
-// Exécuter immédiatement si le DOM est déjà chargé
-if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', window.initContestio);
-} else {
-  window.initContestio();
-}
+  // Exécuter immédiatement si le DOM est déjà chargé
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', window.initContestio);
+  } else {
+    window.initContestio();
+  }
 </script>
