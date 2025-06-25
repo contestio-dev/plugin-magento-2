@@ -34,7 +34,7 @@ class React extends Template
     public function getIframeUrl()
     {
         $baseUrl = $this->scopeConfig->getValue('contestio_connect/api_settings_advanced/base_url_iframe');
-        echo("<script>console.log('basurl: " . $baseUrl . "');</script>");
+        echo("<script>console.log('basurl: " . json_encode($baseUrl). "');</script>");
 
         return $baseUrl ? $baseUrl : "https://plugin.contestio.fr";
     }
@@ -61,7 +61,7 @@ class React extends Template
 
         if ($shop) {
             $params .= "shop=" . urlencode($shop);
-        echo("<script>console.log('paraaams111: " . $params . "');</script>");
+        echo("<script>console.log('paraaams111: " . json_encode($params) . "');</script>");
         }
 
         // Get current query params
@@ -75,7 +75,8 @@ class React extends Template
         }
 
         // Return the encoded params
-        echo("<script>console.log('paraaams222: " . $params . "');</script>");
+        echo("params: " . $params . "<br>");
+        echo("<script>console.log('paraaams222: " . json_encode($params) . "');</script>");
 
         return $params === "?" ? "" : $params;
         
@@ -86,7 +87,8 @@ class React extends Template
         // Get current url
         $currentUrl = $this->getUrl('*/*/*', ['_current' => true, '_use_rewrite' => true]);
         $userAgent = $this->getRequest()->getHeader('User-Agent');
-        echo("<script>console.log('getmetatags1): " . $currentUrl . "');</script>");
+        echo("currentUrl: " . $currentUrl . "<br>");
+        echo("<script>console.log('getmetatags1): " . json_encode($currentUrl) . "');</script>");
         // Default meta data
         $metaData = array(
             'title' => null,
@@ -114,7 +116,7 @@ class React extends Template
                 null
             );
 
-            echo("<script>console.log('response): " . $response . "');</script>");
+            echo("<script>console.log('response): " . json_encode($response) . "');</script>");
 
             return $response;
 
@@ -122,7 +124,9 @@ class React extends Template
                 $metaData = array_merge($metaData, $response);
             }
         } catch (Exception $e) {
-            echo("<script>console.log('e->getMessage()(): " . $e->getMessage() . "');</script>");
+            $mess = $e->getMessage();
+            echo("Error: " . $mess . "<br>");
+            echo("<script>console.log('e->getMessage: " . json_encode($mess) . "');</script>");
         }
 
         return $metaData;
