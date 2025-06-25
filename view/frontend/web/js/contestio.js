@@ -3,7 +3,7 @@
 
   console.log('contestio.js loaded');
 
-  const verbose = false;
+  const verbose = true;
   
   const logger = {
     log: function(message, data) {
@@ -51,6 +51,7 @@
 
   // Remplacer ces fonctions par une seule initialisation
   function init() {
+    console.log('111111111111');
     // Au lieu de bloquer complètement la réinitialisation, on va la forcer si nécessaire
     if (window.contestioInitialized) {
       // On vérifie si les éléments nécessaires sont présents
@@ -67,6 +68,7 @@
       }
     }
     window.contestioInitialized = true;
+    console.log('222222222222');
 
     logger.log('contestio.js - init');
     const container = document.querySelector('.contestio-container');
