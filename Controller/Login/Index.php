@@ -56,9 +56,15 @@ class Index extends Action implements CsrfAwareActionInterface
             ])->setHttpResponseCode(405);
         }
 
+        echo("this->getRequest()");
+        echo($this->getRequest());
+
+
         // Get POST data as JSON and decode it
         $content = $this->getRequest()->getContent();
         $data = json_decode($content, true);
+        echo("data");
+        echo($data);
 
         // Check if the JSON decoding was successful
         if (json_last_error() !== JSON_ERROR_NONE) {
@@ -67,6 +73,9 @@ class Index extends Action implements CsrfAwareActionInterface
                 'message' => __('Invalid JSON data')
             ])->setHttpResponseCode(400);
         }
+
+        echo("data22222222");
+        echo($data);
 
         $username = $data['username'] ?? null;
         $password = $data['password'] ?? null;

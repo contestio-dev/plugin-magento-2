@@ -34,6 +34,8 @@ class React extends Template
     public function getIframeUrl()
     {
         $baseUrl = $this->scopeConfig->getValue('contestio_connect/api_settings_advanced/base_url_iframe');
+                    echo("baseUrl");
+            echo($baseUrl);
         return $baseUrl ? $baseUrl : "https://plugin.contestio.fr";
     }
 
@@ -59,6 +61,8 @@ class React extends Template
 
         if ($shop) {
             $params .= "shop=" . urlencode($shop);
+            echo("params");
+            echo($params);
         }
 
         // Get current query params
@@ -72,7 +76,11 @@ class React extends Template
         }
 
         // Return the encoded params
+            echo("params2222222");
+            echo($params);
+
         return $params === "?" ? "" : $params;
+        
     }
 
     public function getMetaTags()
@@ -80,7 +88,8 @@ class React extends Template
         // Get current url
         $currentUrl = $this->getUrl('*/*/*', ['_current' => true, '_use_rewrite' => true]);
         $userAgent = $this->getRequest()->getHeader('User-Agent');
-
+            echo("getmetatags1");
+            echo($currentUrl);
         // Default meta data
         $metaData = array(
             'title' => null,
@@ -108,13 +117,19 @@ class React extends Template
                 null
             );
 
+            echo("getmetatags22222");
+            echo($response);
+
             return $response;
-    
+                echo("getmetatags33333");
+            echo($is_array($response));
+
             if ($response && is_array($response)) {
                 $metaData = array_merge($metaData, $response);
             }
         } catch (Exception $e) {
-            // echo $e->getMessage();
+            echo("getmetatags4444");
+            echo($e->getMessage());
         }
 
         return $metaData;
