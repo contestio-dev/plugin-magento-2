@@ -15,15 +15,15 @@ $queryParams = $block->getQueryParams();
 
 <style>
   /* Enlarge the container */
-  main#maincontent  {
+  main#maincontent {
     padding: 0 !important;
     max-width: 1400px !important;
     margin: 0 auto !important;
   }
 
   /* Make the container flex */
-  .page-main > .columns,
-  .page-main > .columns > .column.main {
+  .page-main>.columns,
+  .page-main>.columns>.column.main {
     display: flex !important;
     width: 100% !important;
     max-width: 100% !important;
@@ -35,31 +35,15 @@ $queryParams = $block->getQueryParams();
 <div class="contestio-container">
   <div class="contestio-loading" id="contestio-loading"></div>
 
-  <iframe
-  id="contestio-iframe"
-  src="<?php echo $iframeUrl; ?><?php echo $queryParams; ?>"
-  width="100%"
-  height="100%"
-  frameborder="0"
-  allowfullscreen
-  class="contestio-iframe contestio-hidden">
-</iframe>
+  <iframe id="contestio-iframe" src="<?php echo $iframeUrl; ?><?php echo $queryParams; ?>" width="100%" height="100%"
+    frameborder="0" allowfullscreen class="contestio-iframe contestio-hidden">
+  </iframe>
 </div>
 
 <script>
-if (typeof window.initContestio === 'undefined') {
-  window.initContestio = () => {
-    console.log('Contestio: Initializing');
-
-    const showIframe = () => {
-      const loading = document.getElementById('contestio-loading');
-      const iframe = document.getElementById('contestio-iframe');
-      
-      if (!loading || !iframe) {
-        console.error('Contestio: Elements not found', { loading, iframe });
-        return;
-      }
-
+  if (typeof window.initContestio === 'undefined') {
+    window.initContestio = () => {
+      console.log('Contestio: Initializing');
       loading.style.display = 'none';
       iframe.classList.remove('contestio-hidden');
     }
@@ -101,7 +85,6 @@ if (typeof window.initContestio === 'undefined') {
           
           iframe.onload = function() {
             clearTimeout(timeoutId);
-            clearTimeout(loginTimeoutId);
             showIframe();
           };
           
@@ -120,12 +103,11 @@ if (typeof window.initContestio === 'undefined') {
         showIframe();
       });
   }
-}
 
-// Exécuter immédiatement si le DOM est déjà chargé
-if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', window.initContestio);
-} else {
-  window.initContestio();
-}
+  // Exécuter immédiatement si le DOM est déjà chargé
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', window.initContestio);
+  } else {
+    window.initContestio();
+  }
 </script>
