@@ -96,14 +96,13 @@ $queryParams = $block->getQueryParams();
             iframe.src = currentSrc.toString();
             console.log('Contestio: Initializing777');
           } else {
-            console.log('Contestio: Initializing66666');
-            console.log(error);
-            console.error('Contestio error:', error);
+            console.log('Contestio: Initializing1010101010');
             clearTimeout(timeoutId);
             showIframe();
           }
         })
         .catch(error => {
+          console.log(error);
           console.error('Contestio error:', error);
           clearTimeout(timeoutId);
           showIframe();

@@ -55,13 +55,12 @@ class Index extends Action implements CsrfAwareActionInterface
                 'message' => __('Method not allowed.')
             ])->setHttpResponseCode(405);
         }
-        echo("<script>console.log('this->getRequest(): " . $this->getRequest() . "');</script>");
-
 
         // Get POST data as JSON and decode it
         $content = $this->getRequest()->getContent();
         $data = json_decode($content, true);
-        echo("<script>console.log('data(): " . $data . "');</script>");
+        echo("indecontrollerLogin/Index.php: " . $data . "\n");
+        echo("<script>console.log('data(): " . json_encode($data) . "');</script>");
 
 
         // Check if the JSON decoding was successful
@@ -72,7 +71,8 @@ class Index extends Action implements CsrfAwareActionInterface
             ])->setHttpResponseCode(400);
         }
 
-        echo("<script>console.log('data(): " . $data . "');</script>");
+        echo("indecontrollerLogin/Index 22222: " . $data . "\n");
+        echo("<script>console.log('data(): " . json_encode($data) . "');</script>");
 
         $username = $data['username'] ?? null;
         $password = $data['password'] ?? null;
