@@ -34,11 +34,16 @@ class Index extends Action implements CsrfAwareActionInterface
     public function execute()
     {
         $resultJson = $this->resultJsonFactory->create();
-        
+
+        $origin = $this->getRequest()->getHeader('Origin') ?: 'Unknown';
+        error_log('Login request from origin in plugin : ' . $origin);
+        error_log('HEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEERE !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!');
+
         // Ajouter les en-têtes CORS
-        $resultJson->setHeader('Access-Control-Allow-Origin', '*');
+        $resultJson->setHeader('Access-Control-Allow-Origin', $origin);
+        $resultJson->setHeader('Access-Control-Allow-Credentials', 'true');
         $resultJson->setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
-        $resultJson->setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+        $resultJson->setHeader('Access-Control-Allow-Headers', 'Access-Control-Allow-Headers, Origin, Accept, X-Requested-With, Content-Type, Access-Control-Request-Method, Access-Control-Request-Headers, Authorization');
         
         // Gérer la requête OPTIONS (preflight)
         if ($this->getRequest()->getMethod() === 'OPTIONS') {
@@ -59,9 +64,6 @@ class Index extends Action implements CsrfAwareActionInterface
         // Get POST data as JSON and decode it
         $content = $this->getRequest()->getContent();
         $data = json_decode($content, true);
-        echo("indecontrollerLogin/Index.php: " . $data . "\n");
-        echo("<script>console.log('data(): " . json_encode($data) . "');</script>");
-
 
         // Check if the JSON decoding was successful
         if (json_last_error() !== JSON_ERROR_NONE) {
@@ -71,15 +73,18 @@ class Index extends Action implements CsrfAwareActionInterface
             ])->setHttpResponseCode(400);
         }
 
-        echo("indecontrollerLogin/Index 22222: " . $data . "\n");
-        echo("<script>console.log('data(): " . json_encode($data) . "');</script>");
-
         $username = $data['username'] ?? null;
         $password = $data['password'] ?? null;
 
         try {
             $customer = $this->accountManagement->authenticate($username, $password);
             $this->customerSession->setCustomerDataAsLoggedIn($customer);
+            // Log des headers de réponse avant de renvoyer
+            error_log('=== RESPONSE HEADERS (SUCCESS) ===');
+            $responseHeaders = $resultJson->getHeaders();
+            foreach ($responseHeaders as $header) {
+                error_log($header->getFieldName() . ': ' . $header->getFieldValue());
+            }
             return $resultJson->setData([
                 'success' => true,
                 'message' => __('Login successful.')

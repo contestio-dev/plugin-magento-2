@@ -61,7 +61,6 @@ class React extends Template
 
         if ($shop) {
             $params .= "shop=" . urlencode($shop);
-        echo("<script>console.log('paraaams111: " . json_encode($params) . "');</script>");
         }
 
         // Get current query params
@@ -75,7 +74,6 @@ class React extends Template
         }
 
         // Return the encoded params
-        echo("params: " . $params . "<br>");
         echo("<script>console.log('paraaams222: " . json_encode($params) . "');</script>");
 
         return $params === "?" ? "" : $params;
@@ -87,7 +85,6 @@ class React extends Template
         // Get current url
         $currentUrl = $this->getUrl('*/*/*', ['_current' => true, '_use_rewrite' => true]);
         $userAgent = $this->getRequest()->getHeader('User-Agent');
-        echo("currentUrl: " . $currentUrl . "<br>");
         echo("<script>console.log('getmetatags1): " . json_encode($currentUrl) . "');</script>");
         // Default meta data
         $metaData = array(
@@ -125,8 +122,8 @@ class React extends Template
             }
         } catch (Exception $e) {
             $mess = $e->getMessage();
-            echo("Error: " . $mess . "<br>");
             echo("<script>console.log('e->getMessage: " . json_encode($mess) . "');</script>");
+            echo("<script>console.log('err: " . json_encode($e) . "');</script>");
         }
 
         return $metaData;
