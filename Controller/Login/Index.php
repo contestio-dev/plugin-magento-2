@@ -79,11 +79,10 @@ class Index extends Action implements CsrfAwareActionInterface
         try {
             $customer = $this->accountManagement->authenticate($username, $password);
             $this->customerSession->setCustomerDataAsLoggedIn($customer);
-            // Log des headers de réponse avant de renvoyer
-            error_log('=== RESPONSE HEADERS (SUCCESS) ===');
-            $responseHeaders = $resultJson->getHeaders();
-            foreach ($responseHeaders as $header) {
-                error_log($header->getFieldName() . ': ' . $header->getFieldValue());
+            $requestHeaders = $this->getRequest()->getHeaders()->toArray();
+            error_log('=== REQUEST HEADERS ===');
+            foreach ($requestHeaders as $name => $value) {
+                error_log($name . ': ' . (is_array($value) ? implode(', ', $value) : $value));
             }
             return $resultJson->setData([
                 'success' => true,
