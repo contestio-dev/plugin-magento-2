@@ -81,6 +81,7 @@ $queryParams = $block->getQueryParams();
             currentSrc.searchParams.append('customer_id', data.customer_id);
             currentSrc.searchParams.append('customer_email', data.customer_email);
             console.log('Contestio: Initializing4444');
+            console.log(currentSrc.toString());
             // Timeout spécifique pour les utilisateurs connectés
             const loginTimeoutId = setTimeout(() => {
               clearTimeout(timeoutId);

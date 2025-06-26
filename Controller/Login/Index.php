@@ -35,13 +35,8 @@ class Index extends Action implements CsrfAwareActionInterface
     {
         $resultJson = $this->resultJsonFactory->create();
 
-        $origin = $this->getRequest()->getHeader('Origin') ?: 'Unknown';
-        error_log('Login request from origin in plugin : ' . $origin);
-        error_log('HEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEERE !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!');
-
         // Ajouter les en-têtes CORS
-        $resultJson->setHeader('Access-Control-Allow-Origin', $origin);
-        $resultJson->setHeader('Access-Control-Allow-Credentials', 'true');
+        $resultJson->setHeader('Access-Control-Allow-Origin', '*');
         $resultJson->setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
         $resultJson->setHeader('Access-Control-Allow-Headers', 'Access-Control-Allow-Headers, Origin, Accept, X-Requested-With, Content-Type, Access-Control-Request-Method, Access-Control-Request-Headers, Authorization');
         
