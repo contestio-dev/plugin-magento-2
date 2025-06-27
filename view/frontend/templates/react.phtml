@@ -35,8 +35,16 @@ $queryParams = $block->getQueryParams();
 <div class="contestio-container">
   <div class="contestio-loading" id="contestio-loading"></div>
 
-  <iframe id="contestio-iframe" src="<?php echo $iframeUrl; ?><?php echo $queryParams; ?>" width="100%" height="100%"
-    frameborder="0" allowfullscreen class="contestio-iframe contestio-hidden">
+  <iframe 
+    id="contestio-iframe" 
+    src="<?php echo $iframeUrl; ?><?php echo $queryParams; ?>"
+    sandbo
+    width="100%" 
+    height="100%"
+    frameborder="0" 
+    allowfullscreen 
+    sandbox="allow-scripts allow-same-origin allow-forms"
+    class="contestio-iframe contestio-hidden">
   </iframe>
 </div>
 

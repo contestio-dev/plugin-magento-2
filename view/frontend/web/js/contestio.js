@@ -4,19 +4,19 @@
   console.log('contestio.js loaded');
 
   const verbose = true;
-  
+
   const logger = {
-    log: function(message, data) {
+    log: function (message, data) {
       if (verbose) {
         console.log('Contestio - ' + message, data ?? '');
       }
     },
-    warn: function(message, data) {
+    warn: function (message, data) {
       if (verbose) {
         console.warn('Contestio - ' + message, data ?? '');
       }
     },
-    error: function(message, data) {
+    error: function (message, data) {
       if (verbose) {
         console.error('Contestio - ' + message, data ?? '');
       }
@@ -36,7 +36,7 @@
     handleViewportResize(event) {
       const currentHeight = window.visualViewport.height;
       const heightDiff = Math.abs(this.lastHeight - currentHeight);
-      
+
       // Scroll to the top if the height change
       if (heightDiff > 20 && currentHeight > this.lastHeight) {
         window.scrollTo({
@@ -44,7 +44,7 @@
           behavior: 'smooth'
         });
       }
-      
+
       this.lastHeight = currentHeight;
     }
   }
@@ -57,7 +57,7 @@
       // On vérifie si les éléments nécessaires sont présents
       const container = document.querySelector('.contestio-container');
       const iframe = document.querySelector('.contestio-iframe');
-      
+
       if (container && iframe) {
         // Si les éléments sont présents, on force la réinitialisation
         logger.log('contestio.js - reinitializing');
@@ -95,7 +95,7 @@
 
       const windowHeight = window.innerHeight;
       const newHeight = windowHeight - offset; // Remove the header/navbar height
-      
+
       // Update the iframe height
       containerElt.style.height = `${newHeight}px`;
     }
@@ -136,10 +136,10 @@
           switch (type) {
             case 'login':
               // Url = current url without query params
-              const url = window.location.href.includes('?') 
-                ? window.location.href.split('?')[0] 
+              const url = window.location.href.includes('?')
+                ? window.location.href.split('?')[0]
                 : window.location.href;
-              
+
               const loginUrl = url.endsWith('/') ? url + 'login' : url + '/login';
               logger.log('Attempting login to:', loginUrl);
 
@@ -196,8 +196,13 @@
 
             case 'createCookie':
               // Create cookie with SameSite=None for Safari iOS iframe support
+              let cookieStr;
               const isHttps = window.location.protocol === 'https:';
-              const cookieStr = `${cookie.name}=${cookie.value}; expires=${cookie.expires}; path=${cookie.path || '/'}; SameSite=None${isHttps ? '; Secure' : ''}`;
+              if (isHttps) {
+                cookieStr = `${cookie.name}=${cookie.value}; expires=${cookie.expires}; path=${cookie.path || '/'}; SameSite=None; Secure`;
+              } else {
+                cookieStr = `${cookie.name}=${cookie.value}; expires=${cookie.expires}; path=${cookie.path || '/'}; SameSite=Lax`;
+              }
               document.cookie = cookieStr;
               logger.log('Create cookie:', cookie, cookieStr, document.cookie);
               break;
@@ -218,8 +223,13 @@
 
             case 'deleteCookie':
               // Delete cookie with same SameSite attributes
+              let deleteCookieStr;
               const isHttpsDelete = window.location.protocol === 'https:';
-              const deleteCookieStr = `${cookie.name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=${cookie.path || '/'}; SameSite=None${isHttpsDelete ? '; Secure' : ''}`;
+              if (isHttps) {
+                deleteCookieStr = `${cookie.name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=${cookie.path || '/'}; SameSite=None; Secure`;
+              } else {
+                deleteCookieStr = `${cookie.name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=${cookie.path || '/'}; SameSite=Lax`;
+              }
               document.cookie = deleteCookieStr;
               logger.log('Delete cookie:', cookie, deleteCookieStr, document.cookie);
               break;
@@ -229,7 +239,7 @@
           }
         } catch (error) {
           logger.error('Error processing message:', error);
-          
+
           if (type === 'login') {
             event.source.postMessage({
               loginResponse: {
