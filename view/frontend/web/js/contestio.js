@@ -37,7 +37,6 @@
       const currentHeight = window.visualViewport.height;
       const heightDiff = Math.abs(this.lastHeight - currentHeight);
 
-      // Scroll to the top if the height change
       if (heightDiff > 20 && currentHeight > this.lastHeight) {
         window.scrollTo({
           top: 0,
@@ -49,251 +48,240 @@
     }
   }
 
-  // Remplacer ces fonctions par une seule initialisation
   function init() {
-    console.log('111111111111');
-    // Au lieu de bloquer complètement la réinitialisation, on va la forcer si nécessaire
-    if (window.contestioInitialized) {
-      // On vérifie si les éléments nécessaires sont présents
+    logger.log('contestio.js - init starting');
+    
+    // ✅ COORDINATION: Attendre que l'iframe soit prête
+    const waitForIframe = () => {
+      if (!window.contestioGlobal || !window.contestioGlobal.iframeReady) {
+        logger.log('contestio.js - waiting for iframe to be ready');
+        
+        // Ajouter à la queue des callbacks
+        if (window.contestioGlobal) {
+          window.contestioGlobal.callbacks.push(initContestioFeatures);
+        }
+        
+        // Fallback: réessayer dans 500ms
+        setTimeout(waitForIframe, 500);
+        return;
+      }
+      
+      initContestioFeatures();
+    };
+
+    const initContestioFeatures = () => {
+      if (window.contestioInitialized) {
+        logger.log('contestio.js - already initialized');
+        return;
+      }
+      
+      window.contestioInitialized = true;
+      logger.log('contestio.js - initializing features');
+
       const container = document.querySelector('.contestio-container');
       const iframe = document.querySelector('.contestio-iframe');
 
-      if (container && iframe) {
-        // Si les éléments sont présents, on force la réinitialisation
-        logger.log('contestio.js - reinitializing');
-        window.contestioInitialized = false;
-      } else {
-        logger.log('contestio.js - skipping initialization (no elements found)');
-        return;
-      }
-    }
-    window.contestioInitialized = true;
-    console.log('222222222222');
-
-    logger.log('contestio.js - init');
-    const container = document.querySelector('.contestio-container');
-    const iframe = document.querySelector('.contestio-iframe');
-
-    if (!container || !iframe) {
-      logger.warn('contestio.js - container or iframe not found');
-      return;
-    }
-
-    // Initialize keyboard manager
-    new KeyboardManager(iframe);
-
-    function adjustHeight() {
-      const mainContentElt = document.querySelector('#maincontent');
-      const containerElt = document.querySelector('.contestio-container');
-
-      if (!mainContentElt || !containerElt) {
-        logger.warn('contestio.js - mainContentElt or containerElt not found');
+      if (!container || !iframe) {
+        logger.warn('contestio.js - container or iframe not found');
         return;
       }
 
-      let offset = mainContentElt.offsetTop || 0;
+      // Initialize keyboard manager
+      new KeyboardManager(iframe);
 
-      const windowHeight = window.innerHeight;
-      const newHeight = windowHeight - offset; // Remove the header/navbar height
+      function adjustHeight() {
+        const mainContentElt = document.querySelector('#maincontent');
+        const containerElt = document.querySelector('.contestio-container');
 
-      // Update the iframe height
-      containerElt.style.height = `${newHeight}px`;
-    }
-
-    // Ajuster la hauteur immédiatement
-    adjustHeight();
-
-    // Ajuster la hauteur lors du redimensionnement
-    window.addEventListener('resize', adjustHeight);
-
-    // Function to create and configure the message listener
-    function createMessageListener() {
-      const messageHandler = async (event) => {
-        const iframeElt = document.querySelector('.contestio-iframe');
-        // Strict security check
-        const iframeOrigin = new URL(iframeElt.src).origin;
-        if (!event.origin || event.origin !== iframeOrigin) {
-          logger.warn('Message received from unauthorized origin:', event.origin);
+        if (!mainContentElt || !containerElt) {
+          logger.warn('contestio.js - mainContentElt or containerElt not found');
           return;
         }
 
-        // Check that event.data exists and is an object
-        if (!event.data || typeof event.data !== 'object') {
-          logger.warn('Invalid message received:', event.data);
-          return;
-        }
+        let offset = mainContentElt.offsetTop || 0;
+        const windowHeight = window.innerHeight;
+        const newHeight = windowHeight - offset;
 
-        const {
-          type,
-          loginCredentials,
-          pathname,
-          redirectUrl,
-          clipboardText,
-          cookie
-        } = event.data;
+        containerElt.style.height = `${newHeight}px`;
+        logger.log('contestio.js - height adjusted to:', newHeight);
+      }
 
-        try {
-          switch (type) {
-            case 'login':
-              // Url = current url without query params
-              const url = window.location.href.includes('?')
-                ? window.location.href.split('?')[0]
-                : window.location.href;
+      // ✅ DÉLAI SAFARI iOS: Attendre un peu avant ajustement hauteur
+      setTimeout(() => {
+        adjustHeight();
+      }, 300);
 
-              const loginUrl = url.endsWith('/') ? url + 'login' : url + '/login';
-              logger.log('Attempting login to:', loginUrl);
+      window.addEventListener('resize', adjustHeight);
 
-              const response = await fetch(loginUrl, {
-                method: 'POST',
-                headers: {
-                  'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                  username: loginCredentials.username,
-                  password: loginCredentials.password
-                }),
-              });
+      // Message listener setup (votre code existant)
+      function createMessageListener() {
+        const messageHandler = async (event) => {
+          const iframeElt = document.querySelector('.contestio-iframe');
+          const iframeOrigin = new URL(iframeElt.src).origin;
+          
+          if (!event.origin || event.origin !== iframeOrigin) {
+            logger.warn('Message received from unauthorized origin:', event.origin);
+            return;
+          }
 
-              const data = await response.json();
+          if (!event.data || typeof event.data !== 'object') {
+            logger.warn('Invalid message received:', event.data);
+            return;
+          }
 
-              if (data.success) {
-                window.location.reload();
-              } else {
+          const { type, loginCredentials, pathname, redirectUrl, clipboardText, cookie } = event.data;
+
+          try {
+            switch (type) {
+              case 'login':
+                const url = window.location.href.includes('?')
+                  ? window.location.href.split('?')[0]
+                  : window.location.href;
+
+                const loginUrl = url.endsWith('/') ? url + 'login' : url + '/login';
+                logger.log('Attempting login to:', loginUrl);
+
+                const response = await fetch(loginUrl, {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({
+                    username: loginCredentials.username,
+                    password: loginCredentials.password
+                  }),
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                  window.location.reload();
+                } else {
+                  event.source.postMessage({
+                    loginResponse: {
+                      success: false,
+                      message: data.message,
+                      data: data
+                    }
+                  }, iframeOrigin);
+                }
+                break;
+
+              case 'pathname':
+                const currentUrl = new URL(window.location.href);
+                currentUrl.search = '';
+                currentUrl.searchParams.delete('l');
+                currentUrl.searchParams.delete('u');
+
+                let newUrl = currentUrl.toString();
+                if (pathname !== '' && pathname !== '/') {
+                  newUrl += (newUrl.includes('?') ? '&' : '?') + 'l=' + pathname;
+                }
+
+                logger.log('Update URL to:', newUrl);
+                history.pushState(null, null, newUrl);
+                break;
+
+              case 'redirect':
+                logger.log('Redirect to:', redirectUrl);
+                window.location.href = redirectUrl;
+                break;
+
+              case 'clipboard':
+                logger.log('Copy to clipboard:', clipboardText);
+                await navigator.clipboard.writeText(clipboardText);
+                break;
+
+              case 'createCookie':
+                const isHttps = window.location.protocol === 'https:';
+                let cookieStr;
+                if (isHttps) {
+                  cookieStr = `${cookie.name}=${cookie.value}; expires=${cookie.expires}; path=${cookie.path || '/'}; SameSite=None; Secure`;
+                } else {
+                  cookieStr = `${cookie.name}=${cookie.value}; expires=${cookie.expires}; path=${cookie.path || '/'}; SameSite=Lax`;
+                }
+                document.cookie = cookieStr;
+                logger.log('Create cookie:', cookie, cookieStr);
+                break;
+
+              case 'getCookie':
+                const cookieValue = document.cookie.split('; ').find(row => row.startsWith(`${cookie.name}=`))?.split('=')[1];
+                logger.log('Get cookie:', cookie, cookieValue);
                 event.source.postMessage({
-                  loginResponse: {
-                    success: false,
-                    message: data.message,
-                    data: data
+                  getCookieResponse: {
+                    success: cookieValue ? true : false,
+                    cookieName: cookie.name,
+                    cookieValue: cookieValue
                   }
                 }, iframeOrigin);
-              }
-              break;
+                break;
 
-            case 'pathname':
-              const currentUrl = new URL(window.location.href);
-              currentUrl.search = '';
-              currentUrl.searchParams.delete('l');
-              currentUrl.searchParams.delete('u');
+              case 'deleteCookie':
+                const isHttpsDelete = window.location.protocol === 'https:';
+                let deleteCookieStr;
+                if (isHttpsDelete) {
+                  deleteCookieStr = `${cookie.name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=${cookie.path || '/'}; SameSite=None; Secure`;
+                } else {
+                  deleteCookieStr = `${cookie.name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=${cookie.path || '/'}; SameSite=Lax`;
+                }
+                document.cookie = deleteCookieStr;
+                logger.log('Delete cookie:', cookie, deleteCookieStr);
+                break;
 
-              let newUrl = currentUrl.toString();
-              if (pathname !== '' && pathname !== '/') {
-                newUrl += (newUrl.includes('?') ? '&' : '?') + 'l=' + pathname;
-              }
+              default:
+                logger.warn('Unknown message type:', type);
+            }
+          } catch (error) {
+            logger.error('Error processing message:', error);
 
-              logger.log('Update URL to:', newUrl);
-              history.pushState(null, null, newUrl);
-              break;
-
-            case 'redirect':
-              logger.log('Redirect to:', redirectUrl);
-              window.location.href = redirectUrl;
-              break;
-
-            case 'clipboard':
-              logger.log('Copy to clipboard:', clipboardText);
-              await navigator.clipboard.writeText(clipboardText);
-              break;
-
-            case 'createCookie':
-              // Create cookie with SameSite=None for Safari iOS iframe support
-              let cookieStr;
-              const isHttps = window.location.protocol === 'https:';
-              if (isHttps) {
-                cookieStr = `${cookie.name}=${cookie.value}; expires=${cookie.expires}; path=${cookie.path || '/'}; SameSite=None; Secure`;
-              } else {
-                cookieStr = `${cookie.name}=${cookie.value}; expires=${cookie.expires}; path=${cookie.path || '/'}; SameSite=Lax`;
-              }
-              document.cookie = cookieStr;
-              logger.log('Create cookie:', cookie, cookieStr, document.cookie);
-              break;
-
-            case 'getCookie':
-              // Get cookie
-              const cookieValue = document.cookie.split('; ').find(row => row.startsWith(`${cookie.name}=`))?.split('=')[1];
-              logger.log('Get cookie:', cookie, cookieValue);
-              // Send response to the iframe
+            if (type === 'login') {
               event.source.postMessage({
-                getCookieResponse: {
-                  success: cookieValue ? true : false,
-                  cookieName: cookie.name,
-                  cookieValue: cookieValue
+                loginResponse: {
+                  success: false,
+                  message: "Erreur lors du traitement de la requête",
+                  error: error.message
                 }
               }, iframeOrigin);
-              break;
-
-            case 'deleteCookie':
-              // Delete cookie with same SameSite attributes
-              let deleteCookieStr;
-              const isHttpsDelete = window.location.protocol === 'https:';
-              if (isHttps) {
-                deleteCookieStr = `${cookie.name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=${cookie.path || '/'}; SameSite=None; Secure`;
-              } else {
-                deleteCookieStr = `${cookie.name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=${cookie.path || '/'}; SameSite=Lax`;
-              }
-              document.cookie = deleteCookieStr;
-              logger.log('Delete cookie:', cookie, deleteCookieStr, document.cookie);
-              break;
-
-            default:
-              logger.warn('Unknown message type:', type);
+            }
           }
-        } catch (error) {
-          logger.error('Error processing message:', error);
+        };
 
-          if (type === 'login') {
-            event.source.postMessage({
-              loginResponse: {
-                success: false,
-                message: "Erreur lors du traitement de la requête",
-                error: error.message
-              }
-            }, iframeOrigin);
-          }
+        window.addEventListener('message', messageHandler);
+
+        return () => {
+          logger.log('Cleaning up message listener');
+          window.removeEventListener('message', messageHandler);
+        };
+      }
+
+      let cleanup = null;
+
+      function setupListener() {
+        logger.log('Setting up message listener');
+        if (cleanup) {
+          cleanup();
         }
-      };
-
-      // Ajouter le listener
-      window.addEventListener('message', messageHandler);
-
-      // Retourner une fonction de cleanup
-      return () => {
-        logger.log('Cleaning up message listener');
-        window.removeEventListener('message', messageHandler);
-      };
-    }
-
-    // Gérer le cycle de vie du listener
-    let cleanup = null;
-
-    function setupListener() {
-      logger.log('Setting up message listener');
-      // Clean up old listener if it exists
-      if (cleanup) {
-        cleanup();
+        cleanup = createMessageListener();
       }
-      // Create a new listener
-      cleanup = createMessageListener();
-    }
 
-    // Set up the listener initially
-    setupListener();
+      setupListener();
 
-    // Reconfigure the listener when the page becomes visible
-    document.addEventListener('visibilitychange', () => {
-      if (document.visibilityState === 'visible') {
-        logger.log('Visibility changed to visible, reconfiguring listener');
-        setupListener();
-      }
-    });
+      document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState === 'visible') {
+          logger.log('Visibility changed to visible, reconfiguring listener');
+          setupListener();
+        }
+      });
+    };
+
+    // ✅ COORDINATION: Démarrer l'attente
+    waitForIframe();
   }
 
-  // Modifier la partie d'initialisation pour écouter aussi les changements de navigation
+  // Initialisation
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', init);
   } else {
     init();
   }
 
-  // Ajouter un écouteur pour le changement de page avec History API
   window.addEventListener('popstate', init);
 })();
