@@ -1,9 +1,9 @@
 (function () {
   'use strict';
 
-  console.log('🔧 contestio.js loaded');
+  console.log('contestio.js loaded');
 
-  const verbose = true;
+  const verbose = false;
 
   const logger = {
     log: function (message, data) {
@@ -55,7 +55,7 @@
     
     logger.log(`init starting [${Date.now() - startTime}ms] - Safari iOS: ${isSafari}`);
     
-    // ✅ COORDINATION: Attendre que l'iframe soit prête
+    // Attendre que l'iframe soit prête
     const waitForIframe = () => {
       if (!window.contestioGlobal || !window.contestioGlobal.iframeReady) {
         logger.log(`waiting for iframe to be ready [${Date.now() - startTime}ms]`);
@@ -65,7 +65,7 @@
           window.contestioGlobal.callbacks.push(initContestioFeatures);
         }
         
-        // Fallback: réessayer dans 500ms
+        // Fallback: réessayer dans 500ms pour IOS 
         setTimeout(waitForIframe, 500);
         return;
       }
@@ -112,7 +112,7 @@
         containerElt.style.height = `${newHeight}px`;
       }
 
-      // ✅ DÉLAI SAFARI iOS: Attendre un peu avant ajustement hauteur
+      // Attendre un peu avant ajustement hauteur
       setTimeout(() => {
         console.log(`🔧 Initial height adjustment [${Date.now() - startTime}ms]`);
         adjustHeight();
@@ -138,7 +138,7 @@
 
           const { type, loginCredentials, pathname, redirectUrl, clipboardText, cookie } = event.data;
 
-          console.log(`🔧 Processing message type: ${type}`);
+          logger.log(`Processing message type: ${type}`);
 
           try {
             switch (type) {
@@ -162,7 +162,7 @@
                 const data = await response.json();
 
                 if (data.success) {
-                  console.log('🔧 Login successful, reloading page');
+                  logger.log('Login successful, reloading page');
                   window.location.reload();
                 } else {
                   event.source.postMessage({
@@ -282,18 +282,18 @@
       });
     };
 
-    // ✅ COORDINATION: Démarrer l'attente
+    // Démarrer l'attente
     waitForIframe();
   }
 
-  console.log(`🔧 Document readyState: ${document.readyState}`);
+  logger.log(`Document readyState: ${document.readyState}`);
 
   // Initialisation
   if (document.readyState === 'loading') {
-    console.log('🔧 Waiting for DOMContentLoaded');
+    logger.log('Waiting for DOMContentLoaded');
     document.addEventListener('DOMContentLoaded', init);
   } else {
-    console.log('🔧 DOM ready, executing immediately');
+    logger.log('DOM ready, executing immediately');
     init();
   }
 

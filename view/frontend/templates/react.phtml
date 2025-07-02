@@ -3,6 +3,7 @@
 $viewModel = $block->getData('view_model');
 
 if ($viewModel->isContestioRoute() === false) {
+  // If not contestio route, do not load React app
   return;
 }
 
@@ -33,7 +34,7 @@ $queryParams = $block->getQueryParams();
 <div class="contestio-container">
   <div class="contestio-loading" id="contestio-loading"></div>
 
-  <!-- ✅ FIX: Pas de src initial sur l'iframe -->
+  <!-- Pas de src initial sur l'iframe -->
   <iframe 
     id="contestio-iframe" 
     data-url="<?php echo $iframeUrl; ?><?php echo $queryParams; ?>"
@@ -47,7 +48,7 @@ $queryParams = $block->getQueryParams();
 </div>
 
 <script>
-// ✅ COORDINATION: Garder contestioGlobal pour contestio.js
+// ContestioGlobal pour contestio.js
 if (typeof window.contestioGlobal === 'undefined') {
   window.contestioGlobal = {
     iframeReady: false,
@@ -68,12 +69,11 @@ if (typeof window.contestioGlobal === 'undefined') {
     }
   };
   
-  // ✅ LOGS: État initial
   log('=== CONTESTIO INIT START ===');
   log('User Agent:', navigator.userAgent);
-  log('Is Safari iOS:', /Safari/.test(navigator.userAgent) && /iPhone|iPad/.test(navigator.userAgent));
+  // log('Is Safari iOS:', /Safari/.test(navigator.userAgent) && /iPhone|iPad/.test(navigator.userAgent));
   
-  // ✅ PROTECTION: Variable pour éviter le double chargement
+  // Variable pour éviter le double chargement
   let iframeLoaded = false;
   
   function init() {
@@ -84,31 +84,20 @@ if (typeof window.contestioGlobal === 'undefined') {
     const iframe = document.getElementById('contestio-iframe');
     
     if (!iframe || !loading) {
-      log('❌ Elements not found', { iframe: !!iframe, loading: !!loading });
+      log('Elements not found', { iframe: !!iframe, loading: !!loading });
       return;
     }
 
-    // ✅ LOGS: État de l'iframe
-    log('Iframe initial state:', {
-      src: iframe.src,
-      dataUrl: iframe.getAttribute('data-url'),
-      className: iframe.className
-    });
-
-    // ✅ PROTECTION: Vérifier si l'iframe a déjà un src
+    // Vérifier si l'iframe a déjà un src
     if (iframe.src && iframe.src !== 'about:blank') {
-      log('⚠️ Iframe already has src, aborting to prevent double load');
+      log('Iframe already has src, aborting to prevent double load');
       return;
     }
 
-    // ✅ FIX SIMPLE: Récupérer l'URL de base depuis data-url
+    // Récupérer l'URL de base depuis data-url
     const baseUrl = iframe.getAttribute('data-url');
-    log('Base URL from data-url:', baseUrl);
     
-    // ✅ LOGS: Début du fetch
-    log('Starting customerData fetch...');
-    const fetchStartTime = Date.now();
-    
+    const fetchStartTime = Date.now();    
     // Récupérer les données utilisateur
     fetch('/contestio/ajax/customerData', {
       method: 'GET',
@@ -118,56 +107,43 @@ if (typeof window.contestioGlobal === 'undefined') {
       }
     })
       .then(response => {
-        log('CustomerData response:', {
-          status: response.status,
-          duration: Date.now() - fetchStartTime + 'ms'
-        });
-        
         if (!response.ok) {
           throw new Error(`HTTP ${response.status}`);
         }
-        
         return response.json();
       })
       .then(data => {
-        log('Customer data parsed:', data);
-        
-        // ✅ COORDINATION: Marquer les données comme chargées
+        // Marquer les données comme chargées
         window.contestioGlobal.customerDataLoaded = true;
         
-        // ✅ PROTECTION: Vérifier encore une fois
+        // Vérifier encore une fois
         if (iframeLoaded || (iframe.src && iframe.src !== 'about:blank')) {
-          log('⚠️ Iframe already loaded, aborting');
+          log('Iframe already loaded, aborting');
           return;
         }
         
         // Construire l'URL finale avec tous les paramètres
         let finalUrl = baseUrl;
-        
         if (data.customer_id && data.customer_email) {
-          log('✅ User is connected - adding params');
           const separator = baseUrl.includes('?') ? '&' : '?';
           finalUrl = `${baseUrl}${separator}customer_id=${encodeURIComponent(data.customer_id)}&customer_email=${encodeURIComponent(data.customer_email)}`;
-        } else {
-          log('ℹ️ User not connected - using base URL');
         }
         
-        // ✅ FIX: Charger l'iframe UNE SEULE FOIS
+        // Charger l'iframe UNE SEULE FOIS
         iframeLoaded = true;
         
         // Event listener AVANT de définir src
         iframe.onload = function() {
-          log('✅ Iframe onload fired');
+          log('Iframe onload fired');
           
           // Montrer l'iframe
           loading.style.display = 'none';
           iframe.classList.remove('contestio-hidden');
           
-          // ✅ COORDINATION: Marquer l'iframe comme prête
+          // Marquer l'iframe comme prête
           window.contestioGlobal.iframeReady = true;
-          log('✅ contestioGlobal.iframeReady set to true');
           
-          // ✅ COORDINATION: Attendre un peu puis exécuter les callbacks
+          // Attendre un peu puis exécuter les callbacks
           // Plus long délai sur Safari iOS
           const isSafariIOS = /Safari/.test(navigator.userAgent) && /iPhone|iPad/.test(navigator.userAgent);
           const delay = isSafariIOS ? 2000 : 500;
@@ -181,7 +157,7 @@ if (typeof window.contestioGlobal === 'undefined') {
               try {
                 callback();
               } catch (error) {
-                log('❌ Callback error:', error);
+                log('Callback error:', error);
               }
             });
             window.contestioGlobal.callbacks = [];
@@ -189,20 +165,19 @@ if (typeof window.contestioGlobal === 'undefined') {
         };
         
         iframe.onerror = function(e) {
-          log('❌ Iframe onerror fired', e);
+          log('Iframe onerror fired', e);
         };
         
-        // ✅ LOGS: Définition du src
-        log('Setting iframe.src NOW');
+        // Définition du src
         iframe.src = finalUrl;
         
       })
       .catch(error => {
-        log('❌ Error in fetch chain:', {
+        log('Error in fetch chain:', {
           message: error.message
         });
         
-        // ✅ COORDINATION: Marquer comme chargé même en cas d'erreur
+        // Marquer comme chargé même en cas d'erreur
         window.contestioGlobal.customerDataLoaded = true;
         
         // En cas d'erreur, charger quand même l'iframe
@@ -218,7 +193,7 @@ if (typeof window.contestioGlobal === 'undefined') {
             // Exécuter les callbacks
             setTimeout(() => {
               window.contestioGlobal.callbacks.forEach(callback => {
-                try { callback(); } catch (e) { log('❌ Callback error:', e); }
+                try { callback(); } catch (e) { log('Callback error:', e); }
               });
               window.contestioGlobal.callbacks = [];
             }, 500);
