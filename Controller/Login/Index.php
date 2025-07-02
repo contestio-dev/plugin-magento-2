@@ -65,7 +65,7 @@ class Index extends Action implements CsrfAwareActionInterface
         
         // Gérer la requête OPTIONS (preflight)
         if ($this->getRequest()->getMethod() === 'OPTIONS') {
-            return $resultJson;
+            return $resultJson->setHttpResponseCode(200);
         }
 
         // Get method

@@ -61,18 +61,22 @@ if (typeof window.contestioGlobal === 'undefined') {
 
 if (typeof window.initContestio === 'undefined') {
   window.initContestio = () => {
-    console.log('Contestio: React init starting');
+    const startTime = Date.now();
+    const isSafari = /Safari/.test(navigator.userAgent) && /iPhone|iPad/.test(navigator.userAgent);
+    
+    console.log(`🍎 [${Date.now() - startTime}ms] Contestio: React init starting - Safari iOS: ${isSafari}`);
     
     let isIframeShown = false;
     let timeoutId = null;
 
     const showIframe = () => {
       if (isIframeShown) {
-        console.log('Contestio: Iframe already shown');
+        console.log(`🍎 [${Date.now() - startTime}ms] Contestio: Iframe already shown`);
         return;
       }
       
       isIframeShown = true;
+      console.log(`🍎 [${Date.now() - startTime}ms] Contestio: Showing iframe`);
       
       if (timeoutId) {
         clearTimeout(timeoutId);
@@ -83,45 +87,49 @@ if (typeof window.initContestio === 'undefined') {
       const iframe = document.getElementById('contestio-iframe');
 
       if (!loading || !iframe) {
-        console.error('Contestio: Elements not found');
+        console.error(`🍎 [${Date.now() - startTime}ms] Contestio: Elements not found`, { loading, iframe });
         return;
       }
 
-      console.log('Contestio: Showing iframe');
       loading.style.display = 'none';
       iframe.classList.remove('contestio-hidden');
       
       // ✅ COORDINATION: Notifier que l'iframe est prête
       window.contestioGlobal.iframeReady = true;
       
-      // Exécuter les callbacks en attente
-      window.contestioGlobal.callbacks.forEach(callback => {
-        try {
-          callback();
-        } catch (error) {
-          console.error('Contestio: Callback error:', error);
-        }
-      });
-      window.contestioGlobal.callbacks = [];
+      // ✅ DÉLAI SAFARI iOS: Attendre avant de notifier React
+      const safariDelay = isSafari ? 4000 : 2000;
+      setTimeout(() => {
+        // Exécuter les callbacks en attente
+        window.contestioGlobal.callbacks.forEach(callback => {
+          try {
+            callback();
+          } catch (error) {
+            console.error(`🍎 [${Date.now() - startTime}ms] Contestio: Callback error:`, error);
+          }
+        });
+        window.contestioGlobal.callbacks = [];
+      }, safariDelay);
     }
 
     // Timeout de sécurité
     timeoutId = setTimeout(() => {
-      console.log('Contestio: Security timeout reached');
+      console.log(`🍎 [${Date.now() - startTime}ms] Contestio: Security timeout reached`);
       showIframe();
     }, 8000);
 
-    console.log('Contestio: Fetching customer data');
+    console.log(`🍎 [${Date.now() - startTime}ms] Contestio: Fetching customer data`);
 
     fetch('/contestio/ajax/customerData')
       .then(response => {
         if (!response.ok) {
           throw new Error(`HTTP ${response.status}`);
         }
+        console.log(`🍎 [${Date.now() - startTime}ms] Contestio: Customer data response received`);
         return response.json();
       })
       .then(data => {
-        console.log('Contestio: Customer data received', data);
+        console.log(`🍎 [${Date.now() - startTime}ms] Contestio: Customer data received`, data);
         
         // ✅ COORDINATION: Marquer les données comme chargées
         window.contestioGlobal.customerDataLoaded = true;
@@ -129,27 +137,27 @@ if (typeof window.initContestio === 'undefined') {
         const iframe = document.getElementById('contestio-iframe');
 
         if (!iframe) {
-          console.error('Contestio: Iframe not found');
+          console.error(`🍎 [${Date.now() - startTime}ms] Contestio: Iframe not found`);
           showIframe();
           return;
         }
 
         if (data.customer_id && data.customer_email) {
-          console.log('Contestio: User connected, updating iframe URL');
+          console.log(`🍎 [${Date.now() - startTime}ms] Contestio: User connected, updating iframe URL`);
           
           // Event listener AVANT changement de src
           iframe.onload = function() {
-            console.log('Contestio: Iframe loaded successfully');
+            console.log(`🍎 [${Date.now() - startTime}ms] Contestio: Iframe loaded successfully`);
             
             // ✅ DÉLAI SAFARI iOS: Attendre un peu avant de montrer
             setTimeout(() => {
               showIframe();
-            }, 200);
+            }, 2000);
           };
 
           // Timeout spécifique pour utilisateurs connectés
           const loginTimeout = setTimeout(() => {
-            console.log('Contestio: Login timeout reached');
+            console.log(`🍎 [${Date.now() - startTime}ms] Contestio: Login timeout reached`);
             showIframe();
           }, 6000);
 
@@ -165,20 +173,21 @@ if (typeof window.initContestio === 'undefined') {
           currentSrc.searchParams.set('customer_id', data.customer_id);
           currentSrc.searchParams.set('customer_email', data.customer_email);
           
-          console.log('Contestio: New iframe URL:', currentSrc.toString());
+          console.log(`🍎 [${Date.now() - startTime}ms] Contestio: New iframe URL:`, currentSrc.toString());
           
           // ✅ DÉLAI SAFARI iOS: Petit délai avant changement d'URL
           setTimeout(() => {
+            console.log(`🍎 [${Date.now() - startTime}ms] Contestio: Setting iframe src`);
             iframe.src = currentSrc.toString();
           }, 150);
           
         } else {
-          console.log('Contestio: User not connected');
+          console.log(`🍎 [${Date.now() - startTime}ms] Contestio: User not connected`);
           showIframe();
         }
       })
       .catch(error => {
-        console.error('Contestio: Fetch error:', error);
+        console.error(`🍎 [${Date.now() - startTime}ms] Contestio: Fetch error:`, error);
         showIframe();
       });
   }
@@ -186,16 +195,25 @@ if (typeof window.initContestio === 'undefined') {
 
 // ✅ COORDINATION: Initialisation sécurisée
 const initWhenReady = () => {
+  const startTime = Date.now();
+  console.log(`🍎 [${Date.now() - startTime}ms] Contestio: Checking if iframe element exists`);
+  
   if (document.getElementById('contestio-iframe')) {
+    console.log(`🍎 [${Date.now() - startTime}ms] Contestio: Iframe found, initializing`);
     window.initContestio();
   } else {
+    console.log(`🍎 [${Date.now() - startTime}ms] Contestio: Iframe not found, retrying...`);
     setTimeout(initWhenReady, 100);
   }
 };
 
+console.log('🍎 Contestio: Document readyState:', document.readyState);
+
 if (document.readyState === 'loading') {
+  console.log('🍎 Contestio: Waiting for DOMContentLoaded');
   document.addEventListener('DOMContentLoaded', initWhenReady);
 } else {
+  console.log('🍎 Contestio: DOM ready, executing immediately');
   initWhenReady();
 }
 </script>
