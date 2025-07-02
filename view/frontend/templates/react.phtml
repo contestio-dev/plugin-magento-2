@@ -47,6 +47,16 @@ $queryParams = $block->getQueryParams();
 </div>
 
 <script>
+// ✅ COORDINATION: Garder contestioGlobal pour contestio.js
+if (typeof window.contestioGlobal === 'undefined') {
+  window.contestioGlobal = {
+    iframeReady: false,
+    customerDataLoaded: false,
+    listenersSetup: false,
+    callbacks: []
+  };
+}
+
 (function() {
   const startTime = Date.now();
   const log = (msg, data = null) => {
@@ -65,11 +75,10 @@ $queryParams = $block->getQueryParams();
   
   // ✅ PROTECTION: Variable pour éviter le double chargement
   let iframeLoaded = false;
-  window.contestioDebug = window.contestioDebug || {};
   
   function init() {
     log('Init function called');
-    log('Window location:', window.location.href);
+    log('contestioGlobal state:', window.contestioGlobal);
     
     const loading = document.getElementById('contestio-loading');
     const iframe = document.getElementById('contestio-iframe');
@@ -83,25 +92,18 @@ $queryParams = $block->getQueryParams();
     log('Iframe initial state:', {
       src: iframe.src,
       dataUrl: iframe.getAttribute('data-url'),
-      className: iframe.className,
-      readyState: iframe.readyState
+      className: iframe.className
     });
 
     // ✅ PROTECTION: Vérifier si l'iframe a déjà un src
     if (iframe.src && iframe.src !== 'about:blank') {
       log('⚠️ Iframe already has src, aborting to prevent double load');
-      log('Current src:', iframe.src);
       return;
     }
 
     // ✅ FIX SIMPLE: Récupérer l'URL de base depuis data-url
     const baseUrl = iframe.getAttribute('data-url');
     log('Base URL from data-url:', baseUrl);
-    
-    if (!baseUrl) {
-      log('❌ No base URL found in data-url attribute');
-      return;
-    }
     
     // ✅ LOGS: Début du fetch
     log('Starting customerData fetch...');
@@ -116,11 +118,9 @@ $queryParams = $block->getQueryParams();
       }
     })
       .then(response => {
-        log('CustomerData response received:', {
+        log('CustomerData response:', {
           status: response.status,
-          ok: response.ok,
-          headers: response.headers.get('content-type'),
-          fetchDuration: Date.now() - fetchStartTime + 'ms'
+          duration: Date.now() - fetchStartTime + 'ms'
         });
         
         if (!response.ok) {
@@ -132,15 +132,12 @@ $queryParams = $block->getQueryParams();
       .then(data => {
         log('Customer data parsed:', data);
         
-        // ✅ PROTECTION: Vérifier encore une fois
-        if (iframeLoaded) {
-          log('⚠️ Iframe already loaded (flag check), aborting');
-          return;
-        }
+        // ✅ COORDINATION: Marquer les données comme chargées
+        window.contestioGlobal.customerDataLoaded = true;
         
-        if (iframe.src && iframe.src !== 'about:blank') {
-          log('⚠️ Iframe already has src (double check), aborting');
-          log('Current src:', iframe.src);
+        // ✅ PROTECTION: Vérifier encore une fois
+        if (iframeLoaded || (iframe.src && iframe.src !== 'about:blank')) {
+          log('⚠️ Iframe already loaded, aborting');
           return;
         }
         
@@ -151,37 +148,44 @@ $queryParams = $block->getQueryParams();
           log('✅ User is connected - adding params');
           const separator = baseUrl.includes('?') ? '&' : '?';
           finalUrl = `${baseUrl}${separator}customer_id=${encodeURIComponent(data.customer_id)}&customer_email=${encodeURIComponent(data.customer_email)}`;
-          
-          // ✅ LOGS: URL construite
-          log('Final URL constructed:', {
-            hasCustomerId: !!data.customer_id,
-            hasCustomerEmail: !!data.customer_email,
-            urlLength: finalUrl.length
-          });
         } else {
           log('ℹ️ User not connected - using base URL');
         }
         
-        // ✅ LOGS: Avant de définir le src
-        log('About to set iframe src...');
-        log('iframeLoaded flag:', iframeLoaded);
-        
-        // ✅ FIX: Charger l'iframe UNE SEULE FOIS avec l'URL complète
+        // ✅ FIX: Charger l'iframe UNE SEULE FOIS
         iframeLoaded = true;
-        window.contestioDebug.iframeLoadTime = Date.now();
         
         // Event listener AVANT de définir src
         iframe.onload = function() {
-          const loadDuration = Date.now() - window.contestioDebug.iframeLoadTime;
-          log('✅ Iframe onload fired', {
-            loadDuration: loadDuration + 'ms',
-            finalUrl: finalUrl.substring(0, 100) + '...'
-          });
+          log('✅ Iframe onload fired');
           
+          // Montrer l'iframe
           loading.style.display = 'none';
           iframe.classList.remove('contestio-hidden');
           
-          log('✅ Iframe shown successfully');
+          // ✅ COORDINATION: Marquer l'iframe comme prête
+          window.contestioGlobal.iframeReady = true;
+          log('✅ contestioGlobal.iframeReady set to true');
+          
+          // ✅ COORDINATION: Attendre un peu puis exécuter les callbacks
+          // Plus long délai sur Safari iOS
+          const isSafariIOS = /Safari/.test(navigator.userAgent) && /iPhone|iPad/.test(navigator.userAgent);
+          const delay = isSafariIOS ? 2000 : 500;
+          
+          setTimeout(() => {
+            log('Executing contestioGlobal callbacks...', {
+              callbackCount: window.contestioGlobal.callbacks.length
+            });
+            
+            window.contestioGlobal.callbacks.forEach(callback => {
+              try {
+                callback();
+              } catch (error) {
+                log('❌ Callback error:', error);
+              }
+            });
+            window.contestioGlobal.callbacks = [];
+          }, delay);
         };
         
         iframe.onerror = function(e) {
@@ -191,14 +195,15 @@ $queryParams = $block->getQueryParams();
         // ✅ LOGS: Définition du src
         log('Setting iframe.src NOW');
         iframe.src = finalUrl;
-        log('iframe.src has been set');
         
       })
       .catch(error => {
         log('❌ Error in fetch chain:', {
-          message: error.message,
-          stack: error.stack
+          message: error.message
         });
+        
+        // ✅ COORDINATION: Marquer comme chargé même en cas d'erreur
+        window.contestioGlobal.customerDataLoaded = true;
         
         // En cas d'erreur, charger quand même l'iframe
         if (!iframeLoaded && (!iframe.src || iframe.src === 'about:blank')) {
@@ -206,18 +211,22 @@ $queryParams = $block->getQueryParams();
           iframeLoaded = true;
           iframe.src = baseUrl;
           iframe.onload = function() {
-            log('Iframe loaded (fallback)');
             loading.style.display = 'none';
             iframe.classList.remove('contestio-hidden');
+            window.contestioGlobal.iframeReady = true;
+            
+            // Exécuter les callbacks
+            setTimeout(() => {
+              window.contestioGlobal.callbacks.forEach(callback => {
+                try { callback(); } catch (e) { log('❌ Callback error:', e); }
+              });
+              window.contestioGlobal.callbacks = [];
+            }, 500);
           };
         }
       });
   }
 
-  // ✅ LOGS: Vérification de l'état du DOM
-  log('Document readyState:', document.readyState);
-  log('Contestio container exists:', !!document.querySelector('.contestio-container'));
-  
   // Lancer l'init quand le DOM est prêt
   if (document.readyState === 'loading') {
     log('Waiting for DOMContentLoaded...');
@@ -229,13 +238,6 @@ $queryParams = $block->getQueryParams();
     log('DOM already ready, calling init immediately');
     init();
   }
-  
-  // ✅ LOGS: Surveillance des changements
-  window.addEventListener('error', (e) => {
-    if (e.target && e.target.tagName === 'IFRAME') {
-      log('❌ Global iframe error caught:', e);
-    }
-  }, true);
   
 })();
 </script>
