@@ -3,14 +3,12 @@
 $viewModel = $block->getData('view_model');
 
 if ($viewModel->isContestioRoute() === false) {
-  // If not contestio route, do not load React app
   return;
 }
 
 /** @var \Contestio\Connect\Block\React $block */
 $iframeUrl = $block->getIframeUrl();
 $queryParams = $block->getQueryParams();
-
 ?>
 
 <style>
@@ -35,185 +33,209 @@ $queryParams = $block->getQueryParams();
 <div class="contestio-container">
   <div class="contestio-loading" id="contestio-loading"></div>
 
+  <!-- ✅ FIX: Pas de src initial sur l'iframe -->
   <iframe 
     id="contestio-iframe" 
-    src="<?php echo $iframeUrl; ?><?php echo $queryParams; ?>"
-    sandbo
+    data-url="<?php echo $iframeUrl; ?><?php echo $queryParams; ?>"
     width="100%" 
     height="100%"
     frameborder="0" 
     allowfullscreen 
-    sandbox="allow-scripts allow-same-origin allow-forms"
+    sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-popups-to-escape-sandbox"
     class="contestio-iframe contestio-hidden">
   </iframe>
 </div>
 
 <script>
-// Coordination globale
-if (typeof window.contestioGlobal === 'undefined') {
-  window.contestioGlobal = {
-    iframeReady: false,
-    customerDataLoaded: false,
-    listenersSetup: false,
-    callbacks: []
+(function() {
+  const startTime = Date.now();
+  const log = (msg, data = null) => {
+    const timestamp = Date.now() - startTime;
+    if (data) {
+      console.log(`🍎 [${timestamp}ms] ${msg}`, data);
+    } else {
+      console.log(`🍎 [${timestamp}ms] ${msg}`);
+    }
   };
-}
-
-if (typeof window.initContestio === 'undefined') {
-  window.initContestio = () => {
-    const startTime = Date.now();
-    const isSafari = /Safari/.test(navigator.userAgent) && /iPhone|iPad/.test(navigator.userAgent);
+  
+  // ✅ LOGS: État initial
+  log('=== CONTESTIO INIT START ===');
+  log('User Agent:', navigator.userAgent);
+  log('Is Safari iOS:', /Safari/.test(navigator.userAgent) && /iPhone|iPad/.test(navigator.userAgent));
+  
+  // ✅ PROTECTION: Variable pour éviter le double chargement
+  let iframeLoaded = false;
+  window.contestioDebug = window.contestioDebug || {};
+  
+  function init() {
+    log('Init function called');
+    log('Window location:', window.location.href);
     
-    console.log(`🍎 [${Date.now() - startTime}ms] Contestio: React init starting - Safari iOS: ${isSafari}`);
+    const loading = document.getElementById('contestio-loading');
+    const iframe = document.getElementById('contestio-iframe');
     
-    let isIframeShown = false;
-    let timeoutId = null;
-
-    const showIframe = () => {
-      if (isIframeShown) {
-        console.log(`🍎 [${Date.now() - startTime}ms] Contestio: Iframe already shown`);
-        return;
-      }
-      
-      isIframeShown = true;
-      console.log(`🍎 [${Date.now() - startTime}ms] Contestio: Showing iframe`);
-      
-      if (timeoutId) {
-        clearTimeout(timeoutId);
-        timeoutId = null;
-      }
-
-      const loading = document.getElementById('contestio-loading');
-      const iframe = document.getElementById('contestio-iframe');
-
-      if (!loading || !iframe) {
-        console.error(`🍎 [${Date.now() - startTime}ms] Contestio: Elements not found`, { loading, iframe });
-        return;
-      }
-
-      loading.style.display = 'none';
-      iframe.classList.remove('contestio-hidden');
-      
-      // ✅ COORDINATION: Notifier que l'iframe est prête
-      window.contestioGlobal.iframeReady = true;
-      
-      // ✅ DÉLAI SAFARI iOS: Attendre avant de notifier React
-      const safariDelay = isSafari ? 4000 : 2000;
-      setTimeout(() => {
-        // Exécuter les callbacks en attente
-        window.contestioGlobal.callbacks.forEach(callback => {
-          try {
-            callback();
-          } catch (error) {
-            console.error(`🍎 [${Date.now() - startTime}ms] Contestio: Callback error:`, error);
-          }
-        });
-        window.contestioGlobal.callbacks = [];
-      }, safariDelay);
+    if (!iframe || !loading) {
+      log('❌ Elements not found', { iframe: !!iframe, loading: !!loading });
+      return;
     }
 
-    // Timeout de sécurité
-    timeoutId = setTimeout(() => {
-      console.log(`🍎 [${Date.now() - startTime}ms] Contestio: Security timeout reached`);
-      showIframe();
-    }, 8000);
+    // ✅ LOGS: État de l'iframe
+    log('Iframe initial state:', {
+      src: iframe.src,
+      dataUrl: iframe.getAttribute('data-url'),
+      className: iframe.className,
+      readyState: iframe.readyState
+    });
 
-    console.log(`🍎 [${Date.now() - startTime}ms] Contestio: Fetching customer data`);
+    // ✅ PROTECTION: Vérifier si l'iframe a déjà un src
+    if (iframe.src && iframe.src !== 'about:blank') {
+      log('⚠️ Iframe already has src, aborting to prevent double load');
+      log('Current src:', iframe.src);
+      return;
+    }
 
-    fetch('/contestio/ajax/customerData')
+    // ✅ FIX SIMPLE: Récupérer l'URL de base depuis data-url
+    const baseUrl = iframe.getAttribute('data-url');
+    log('Base URL from data-url:', baseUrl);
+    
+    if (!baseUrl) {
+      log('❌ No base URL found in data-url attribute');
+      return;
+    }
+    
+    // ✅ LOGS: Début du fetch
+    log('Starting customerData fetch...');
+    const fetchStartTime = Date.now();
+    
+    // Récupérer les données utilisateur
+    fetch('/contestio/ajax/customerData', {
+      method: 'GET',
+      credentials: 'include',
+      headers: {
+        'Accept': 'application/json',
+      }
+    })
       .then(response => {
+        log('CustomerData response received:', {
+          status: response.status,
+          ok: response.ok,
+          headers: response.headers.get('content-type'),
+          fetchDuration: Date.now() - fetchStartTime + 'ms'
+        });
+        
         if (!response.ok) {
           throw new Error(`HTTP ${response.status}`);
         }
-        console.log(`🍎 [${Date.now() - startTime}ms] Contestio: Customer data response received`);
+        
         return response.json();
       })
       .then(data => {
-        console.log(`🍎 [${Date.now() - startTime}ms] Contestio: Customer data received`, data);
+        log('Customer data parsed:', data);
         
-        // ✅ COORDINATION: Marquer les données comme chargées
-        window.contestioGlobal.customerDataLoaded = true;
-        
-        const iframe = document.getElementById('contestio-iframe');
-
-        if (!iframe) {
-          console.error(`🍎 [${Date.now() - startTime}ms] Contestio: Iframe not found`);
-          showIframe();
+        // ✅ PROTECTION: Vérifier encore une fois
+        if (iframeLoaded) {
+          log('⚠️ Iframe already loaded (flag check), aborting');
           return;
         }
-
-        if (data.customer_id && data.customer_email) {
-          console.log(`🍎 [${Date.now() - startTime}ms] Contestio: User connected, updating iframe URL`);
-          
-          // Event listener AVANT changement de src
-          iframe.onload = function() {
-            console.log(`🍎 [${Date.now() - startTime}ms] Contestio: Iframe loaded successfully`);
-            
-            // ✅ DÉLAI SAFARI iOS: Attendre un peu avant de montrer
-            setTimeout(() => {
-              showIframe();
-            }, 2000);
-          };
-
-          // Timeout spécifique pour utilisateurs connectés
-          const loginTimeout = setTimeout(() => {
-            console.log(`🍎 [${Date.now() - startTime}ms] Contestio: Login timeout reached`);
-            showIframe();
-          }, 6000);
-
-          // Clear le timeout si onload se déclenche
-          const originalOnload = iframe.onload;
-          iframe.onload = function() {
-            clearTimeout(loginTimeout);
-            originalOnload();
-          };
-
-          // Construire la nouvelle URL
-          const currentSrc = new URL(iframe.src);
-          currentSrc.searchParams.set('customer_id', data.customer_id);
-          currentSrc.searchParams.set('customer_email', data.customer_email);
-          
-          console.log(`🍎 [${Date.now() - startTime}ms] Contestio: New iframe URL:`, currentSrc.toString());
-          
-          // ✅ DÉLAI SAFARI iOS: Petit délai avant changement d'URL
-          setTimeout(() => {
-            console.log(`🍎 [${Date.now() - startTime}ms] Contestio: Setting iframe src`);
-            iframe.src = currentSrc.toString();
-          }, 150);
-          
-        } else {
-          console.log(`🍎 [${Date.now() - startTime}ms] Contestio: User not connected`);
-          showIframe();
+        
+        if (iframe.src && iframe.src !== 'about:blank') {
+          log('⚠️ Iframe already has src (double check), aborting');
+          log('Current src:', iframe.src);
+          return;
         }
+        
+        // Construire l'URL finale avec tous les paramètres
+        let finalUrl = baseUrl;
+        
+        if (data.customer_id && data.customer_email) {
+          log('✅ User is connected - adding params');
+          const separator = baseUrl.includes('?') ? '&' : '?';
+          finalUrl = `${baseUrl}${separator}customer_id=${encodeURIComponent(data.customer_id)}&customer_email=${encodeURIComponent(data.customer_email)}`;
+          
+          // ✅ LOGS: URL construite
+          log('Final URL constructed:', {
+            hasCustomerId: !!data.customer_id,
+            hasCustomerEmail: !!data.customer_email,
+            urlLength: finalUrl.length
+          });
+        } else {
+          log('ℹ️ User not connected - using base URL');
+        }
+        
+        // ✅ LOGS: Avant de définir le src
+        log('About to set iframe src...');
+        log('iframeLoaded flag:', iframeLoaded);
+        
+        // ✅ FIX: Charger l'iframe UNE SEULE FOIS avec l'URL complète
+        iframeLoaded = true;
+        window.contestioDebug.iframeLoadTime = Date.now();
+        
+        // Event listener AVANT de définir src
+        iframe.onload = function() {
+          const loadDuration = Date.now() - window.contestioDebug.iframeLoadTime;
+          log('✅ Iframe onload fired', {
+            loadDuration: loadDuration + 'ms',
+            finalUrl: finalUrl.substring(0, 100) + '...'
+          });
+          
+          loading.style.display = 'none';
+          iframe.classList.remove('contestio-hidden');
+          
+          log('✅ Iframe shown successfully');
+        };
+        
+        iframe.onerror = function(e) {
+          log('❌ Iframe onerror fired', e);
+        };
+        
+        // ✅ LOGS: Définition du src
+        log('Setting iframe.src NOW');
+        iframe.src = finalUrl;
+        log('iframe.src has been set');
+        
       })
       .catch(error => {
-        console.error(`🍎 [${Date.now() - startTime}ms] Contestio: Fetch error:`, error);
-        showIframe();
+        log('❌ Error in fetch chain:', {
+          message: error.message,
+          stack: error.stack
+        });
+        
+        // En cas d'erreur, charger quand même l'iframe
+        if (!iframeLoaded && (!iframe.src || iframe.src === 'about:blank')) {
+          log('Loading iframe with base URL due to error');
+          iframeLoaded = true;
+          iframe.src = baseUrl;
+          iframe.onload = function() {
+            log('Iframe loaded (fallback)');
+            loading.style.display = 'none';
+            iframe.classList.remove('contestio-hidden');
+          };
+        }
       });
   }
-}
 
-// ✅ COORDINATION: Initialisation sécurisée
-const initWhenReady = () => {
-  const startTime = Date.now();
-  console.log(`🍎 [${Date.now() - startTime}ms] Contestio: Checking if iframe element exists`);
+  // ✅ LOGS: Vérification de l'état du DOM
+  log('Document readyState:', document.readyState);
+  log('Contestio container exists:', !!document.querySelector('.contestio-container'));
   
-  if (document.getElementById('contestio-iframe')) {
-    console.log(`🍎 [${Date.now() - startTime}ms] Contestio: Iframe found, initializing`);
-    window.initContestio();
+  // Lancer l'init quand le DOM est prêt
+  if (document.readyState === 'loading') {
+    log('Waiting for DOMContentLoaded...');
+    document.addEventListener('DOMContentLoaded', () => {
+      log('DOMContentLoaded fired');
+      init();
+    });
   } else {
-    console.log(`🍎 [${Date.now() - startTime}ms] Contestio: Iframe not found, retrying...`);
-    setTimeout(initWhenReady, 100);
+    log('DOM already ready, calling init immediately');
+    init();
   }
-};
-
-console.log('🍎 Contestio: Document readyState:', document.readyState);
-
-if (document.readyState === 'loading') {
-  console.log('🍎 Contestio: Waiting for DOMContentLoaded');
-  document.addEventListener('DOMContentLoaded', initWhenReady);
-} else {
-  console.log('🍎 Contestio: DOM ready, executing immediately');
-  initWhenReady();
-}
+  
+  // ✅ LOGS: Surveillance des changements
+  window.addEventListener('error', (e) => {
+    if (e.target && e.target.tagName === 'IFRAME') {
+      log('❌ Global iframe error caught:', e);
+    }
+  }, true);
+  
+})();
 </script>
