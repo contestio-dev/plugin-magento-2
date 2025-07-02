@@ -1,7 +1,7 @@
 (function () {
   'use strict';
 
-  console.log('contestio.js loaded');
+  console.log('🔧 contestio.js loaded');
 
   const verbose = true;
 
@@ -37,6 +37,7 @@
       const currentHeight = window.visualViewport.height;
       const heightDiff = Math.abs(this.lastHeight - currentHeight);
 
+      // Scroll to the top if the height change
       if (heightDiff > 20 && currentHeight > this.lastHeight) {
         window.scrollTo({
           top: 0,
@@ -49,12 +50,15 @@
   }
 
   function init() {
-    logger.log('contestio.js - init starting');
+    const startTime = Date.now();
+    const isSafari = /Safari/.test(navigator.userAgent) && /iPhone|iPad/.test(navigator.userAgent);
+    
+    logger.log(`init starting [${Date.now() - startTime}ms] - Safari iOS: ${isSafari}`);
     
     // ✅ COORDINATION: Attendre que l'iframe soit prête
     const waitForIframe = () => {
       if (!window.contestioGlobal || !window.contestioGlobal.iframeReady) {
-        logger.log('contestio.js - waiting for iframe to be ready');
+        logger.log(`waiting for iframe to be ready [${Date.now() - startTime}ms]`);
         
         // Ajouter à la queue des callbacks
         if (window.contestioGlobal) {
@@ -71,20 +75,22 @@
 
     const initContestioFeatures = () => {
       if (window.contestioInitialized) {
-        logger.log('contestio.js - already initialized');
+        logger.log(`already initialized [${Date.now() - startTime}ms]`);
         return;
       }
       
       window.contestioInitialized = true;
-      logger.log('contestio.js - initializing features');
+      logger.log(`initializing features [${Date.now() - startTime}ms]`);
 
       const container = document.querySelector('.contestio-container');
       const iframe = document.querySelector('.contestio-iframe');
 
       if (!container || !iframe) {
-        logger.warn('contestio.js - container or iframe not found');
+        logger.warn(`container or iframe not found [${Date.now() - startTime}ms]`);
         return;
       }
+
+      console.log(`🔧 Found iframe and container, initializing features [${Date.now() - startTime}ms]`);
 
       // Initialize keyboard manager
       new KeyboardManager(iframe);
@@ -94,7 +100,7 @@
         const containerElt = document.querySelector('.contestio-container');
 
         if (!mainContentElt || !containerElt) {
-          logger.warn('contestio.js - mainContentElt or containerElt not found');
+          logger.warn('mainContentElt or containerElt not found');
           return;
         }
 
@@ -102,18 +108,19 @@
         const windowHeight = window.innerHeight;
         const newHeight = windowHeight - offset;
 
+        console.log(`🔧 Adjusting height to: ${newHeight}px [${Date.now() - startTime}ms]`);
         containerElt.style.height = `${newHeight}px`;
-        logger.log('contestio.js - height adjusted to:', newHeight);
       }
 
       // ✅ DÉLAI SAFARI iOS: Attendre un peu avant ajustement hauteur
       setTimeout(() => {
+        console.log(`🔧 Initial height adjustment [${Date.now() - startTime}ms]`);
         adjustHeight();
       }, 300);
 
       window.addEventListener('resize', adjustHeight);
 
-      // Message listener setup (votre code existant)
+      // Message listener setup
       function createMessageListener() {
         const messageHandler = async (event) => {
           const iframeElt = document.querySelector('.contestio-iframe');
@@ -130,6 +137,8 @@
           }
 
           const { type, loginCredentials, pathname, redirectUrl, clipboardText, cookie } = event.data;
+
+          console.log(`🔧 Processing message type: ${type}`);
 
           try {
             switch (type) {
@@ -153,6 +162,7 @@
                 const data = await response.json();
 
                 if (data.success) {
+                  console.log('🔧 Login successful, reloading page');
                   window.location.reload();
                 } else {
                   event.source.postMessage({
@@ -255,7 +265,7 @@
       let cleanup = null;
 
       function setupListener() {
-        logger.log('Setting up message listener');
+        logger.log(`Setting up message listener [${Date.now() - startTime}ms]`);
         if (cleanup) {
           cleanup();
         }
@@ -276,10 +286,14 @@
     waitForIframe();
   }
 
+  console.log(`🔧 Document readyState: ${document.readyState}`);
+
   // Initialisation
   if (document.readyState === 'loading') {
+    console.log('🔧 Waiting for DOMContentLoaded');
     document.addEventListener('DOMContentLoaded', init);
   } else {
+    console.log('🔧 DOM ready, executing immediately');
     init();
   }
 
