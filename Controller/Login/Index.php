@@ -46,8 +46,35 @@ class Index extends Action implements CsrfAwareActionInterface
         // Headers CORS spécifiques au domaine
         $origin = $this->getRequest()->getHeader('Origin');
         $allowedOrigins = [
+            'https://plugin.contestio.fr',
+            'https://plugin.preprod.contestio.fr',
+            'https://plugin.staging.contestio.fr',
+            'https://app.contestio.fr',
+            'https://app.preprod.contestio.fr',
+            'https://app.staging.contestio.fr',
+            'https://www.chemin-des-poulaillers.com',
+            'https://chemin-des-poulaillers.com',
+            'https://www.cabesto.com',
+            'https://cabesto.com',
+            'https://www.bysmaquillage.fr',
+            'https://bysmaquillage.fr',
+            'https://www.toptir.fr',
+            'https://toptir.fr',
+            'https://contestiotestshopi.myshopify.com',
+            'https://pa82nm-9i.myshopify.com',
+            'https://0jatjy-07.myshopify.com',
+            'https://demo-1.contestio.fr',
+            'https://demo-2.contestio.fr',
+            'https://demo-3.contestio.fr',
+            'https://demo-4.contestio.fr',
+            'https://magento.contestio.fr',
             'https://beta.magento2.contestio.fr',
-            'https://plugin.staging.contestio.fr'
+            'http://beta.magento1.contestio.fr',
+            'https://contestio-beta-shopi.myshopify.com',
+            'https://preprod.contestio.fr',
+            'http://localhost:3000',
+            'http://localhost:3001',
+            'http://localhost:3002',        
         ];
         
         if (in_array($origin, $allowedOrigins)) {
