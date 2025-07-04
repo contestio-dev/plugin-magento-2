@@ -43,11 +43,38 @@ class Index extends Action implements CsrfAwareActionInterface
     {
         $resultJson = $this->resultJsonFactory->create();
 
-        // ✅ CORRECTION 1: Headers CORS spécifiques au domaine
+        // Headers CORS spécifiques au domaine
         $origin = $this->getRequest()->getHeader('Origin');
         $allowedOrigins = [
+            'https://plugin.contestio.fr',
+            'https://plugin.preprod.contestio.fr',
+            'https://plugin.staging.contestio.fr',
+            'https://app.contestio.fr',
+            'https://app.preprod.contestio.fr',
+            'https://app.staging.contestio.fr',
+            'https://www.chemin-des-poulaillers.com',
+            'https://chemin-des-poulaillers.com',
+            'https://www.cabesto.com',
+            'https://cabesto.com',
+            'https://www.bysmaquillage.fr',
+            'https://bysmaquillage.fr',
+            'https://www.toptir.fr',
+            'https://toptir.fr',
+            'https://contestiotestshopi.myshopify.com',
+            'https://pa82nm-9i.myshopify.com',
+            'https://0jatjy-07.myshopify.com',
+            'https://demo-1.contestio.fr',
+            'https://demo-2.contestio.fr',
+            'https://demo-3.contestio.fr',
+            'https://demo-4.contestio.fr',
+            'https://magento.contestio.fr',
             'https://beta.magento2.contestio.fr',
-            'https://plugin.staging.contestio.fr'
+            'http://beta.magento1.contestio.fr',
+            'https://contestio-beta-shopi.myshopify.com',
+            'https://preprod.contestio.fr',
+            'http://localhost:3000',
+            'http://localhost:3001',
+            'http://localhost:3002',        
         ];
         
         if (in_array($origin, $allowedOrigins)) {
@@ -56,9 +83,9 @@ class Index extends Action implements CsrfAwareActionInterface
         
         $resultJson->setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
         $resultJson->setHeader('Access-Control-Allow-Headers', 'Access-Control-Allow-Headers, Origin, Accept, X-Requested-With, Content-Type, Access-Control-Request-Method, Access-Control-Request-Headers, Authorization');
-        $resultJson->setHeader('Access-Control-Allow-Credentials', 'true'); // ✅ Important pour Safari iOS
+        $resultJson->setHeader('Access-Control-Allow-Credentials', 'true'); // Important pour Safari iOS
         
-        // ✅ CORRECTION 2: Headers anti-cache pour Safari iOS
+        // Headers anti-cache pour Safari iOS
         $resultJson->setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
         $resultJson->setHeader('Pragma', 'no-cache');
         $resultJson->setHeader('Expires', '0');
@@ -79,13 +106,9 @@ class Index extends Action implements CsrfAwareActionInterface
             ])->setHttpResponseCode(405);
         }
 
-        // ✅ CORRECTION 3: Détection Safari iOS
+        // Détection Safari iOS
         $userAgent = $this->getRequest()->getHeader('User-Agent');
         $isSafariIOS = strpos($userAgent, 'iPhone') !== false || strpos($userAgent, 'iPad') !== false;
-        
-        if ($isSafariIOS) {
-            error_log('Contestio Login - Safari iOS detected: ' . $userAgent);
-        }
 
         // Get POST data as JSON and decode it
         $content = $this->getRequest()->getContent();
@@ -104,22 +127,20 @@ class Index extends Action implements CsrfAwareActionInterface
 
         try {
             $customer = $this->accountManagement->authenticate($username, $password);
-            
-            // ✅ CORRECTION 4: Session avec gestion Safari iOS
             $this->customerSession->setCustomerDataAsLoggedIn($customer);
             
-            // ✅ CORRECTION 5: Forcer la régénération de l'ID de session pour Safari iOS
+            // Forcer la régénération de l'ID de session pour Safari iOS
             if ($isSafariIOS) {
                 $this->customerSession->regenerateId();
                 error_log('Contestio Login - Session regenerated for Safari iOS');
             }
             
-            // ✅ CORRECTION 6: Cookies explicites pour Safari iOS
+            // Cookies explicites pour Safari iOS
             if ($isSafariIOS) {
                 $this->setSafariIOSCookies($customer);
             }
             
-            // ✅ CORRECTION 7: Délai pour Safari iOS avant de confirmer le login
+            // Délai pour Safari iOS avant de confirmer le login
             $responseData = [
                 'success' => true,
                 'message' => __('Login successful.'),
@@ -133,11 +154,6 @@ class Index extends Action implements CsrfAwareActionInterface
             }
             
             $requestHeaders = $this->getRequest()->getHeaders()->toArray();
-            error_log('=== LOGIN SUCCESS ===');
-            error_log('Customer ID: ' . $customer->getId());
-            error_log('Session ID: ' . $this->customerSession->getSessionId());
-            error_log('Safari iOS: ' . ($isSafariIOS ? 'YES' : 'NO'));
-            
             return $resultJson->setData($responseData);
             
         } catch (EmailNotConfirmedException $e) {
@@ -162,7 +178,7 @@ class Index extends Action implements CsrfAwareActionInterface
     }
     
     /**
-     * ✅ CORRECTION 8: Méthode spécifique pour Safari iOS cookies
+     * Méthode spécifique pour Safari iOS cookies
      */
     private function setSafariIOSCookies($customer)
     {
@@ -195,10 +211,7 @@ class Index extends Action implements CsrfAwareActionInterface
                 'contestio_customer_id',
                 $customer->getId(),
                 $cookieMetadata2
-            );
-            
-            error_log('Contestio Login - Safari iOS cookies set successfully');
-            
+            );            
         } catch (\Exception $e) {
             error_log('Contestio Login - Failed to set Safari iOS cookies: ' . $e->getMessage());
         }
