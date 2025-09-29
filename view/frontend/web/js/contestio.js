@@ -190,6 +190,49 @@
                 history.pushState(null, null, newUrl);
                 break;
 
+              case 'history-push':
+                const pushUrl = new URL(window.location.href);
+                pushUrl.search = '';
+                pushUrl.searchParams.delete('l');
+                pushUrl.searchParams.delete('u');
+
+                let newPushUrl = pushUrl.toString();
+                if (pathname !== '' && pathname !== '/') {
+                  newPushUrl += (newPushUrl.includes('?') ? '&' : '?') + 'l=' + pathname;
+                }
+
+                logger.log('History push to:', newPushUrl);
+                history.pushState({ title: event.data.title }, event.data.title || '', newPushUrl);
+                if (event.data.title) {
+                  document.title = event.data.title;
+                }
+                break;
+
+              case 'history-replace':
+                const replaceUrl = new URL(window.location.href);
+                replaceUrl.search = '';
+                replaceUrl.searchParams.delete('l');
+                replaceUrl.searchParams.delete('u');
+
+                let newReplaceUrl = replaceUrl.toString();
+                if (pathname !== '' && pathname !== '/') {
+                  newReplaceUrl += (newReplaceUrl.includes('?') ? '&' : '?') + 'l=' + pathname;
+                }
+
+                logger.log('History replace to:', newReplaceUrl);
+                history.replaceState({ title: event.data.title }, event.data.title || '', newReplaceUrl);
+                if (event.data.title) {
+                  document.title = event.data.title;
+                }
+                break;
+
+              case 'history-back':
+                logger.log('History back');
+                if (window.history.length > 1) {
+                  history.back();
+                }
+                break;
+
               case 'redirect':
                 logger.log('Redirect to:', redirectUrl);
                 window.location.href = redirectUrl;
