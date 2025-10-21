@@ -60,7 +60,7 @@
   }
 
   function normalizeOrigin(url) {
-    if (!url) return null;
+    if (!url || url === 'about:blank' || url.startsWith('about:')) return null;
     try {
       const origin = new URL(url).origin;
       if (origin && origin !== 'null') {
