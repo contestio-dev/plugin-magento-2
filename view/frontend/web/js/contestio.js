@@ -488,30 +488,31 @@
 
             case 'pathname':
               const currentUrl = new URL(window.location.href);
-              currentUrl.search = '';
               currentUrl.searchParams.delete('l');
               currentUrl.searchParams.delete('u');
 
-                let newUrl = currentUrl.toString();
-                if (pathname !== '' && pathname !== '/') {
-                  newUrl += (newUrl.includes('?') ? '&' : '?') + 'l=' + pathname;
-                }
+              if (pathname !== '' && pathname !== '/') {
+                currentUrl.searchParams.set('l', pathname);
+              } else {
+                currentUrl.searchParams.delete('l');
+              }
 
-              logger.log('Update URL to:', newUrl);
-              history.pushState(null, null, newUrl);
+              history.pushState(null, null, currentUrl.toString());
               sendNavigationUpdateToIframe('push');
               break;
 
             case 'history-push':
         const pushUrl = new URL(window.location.href);
-        pushUrl.search = '';
         pushUrl.searchParams.delete('l');
         pushUrl.searchParams.delete('u');
 
-        let newPushUrl = pushUrl.toString();
         if (pathname !== '' && pathname !== '/') {
-          newPushUrl += (newPushUrl.includes('?') ? '&' : '?') + 'l=' + pathname;
+          pushUrl.searchParams.set('l', pathname);
+        } else {
+          pushUrl.searchParams.delete('l');
         }
+
+        const newPushUrl = pushUrl.toString();
 
         if (window.location.href !== newPushUrl) {
           history.pushState({ title: event.data.title }, event.data.title || '', newPushUrl);
@@ -524,16 +525,16 @@
 
       case 'history-replace':
         const replaceUrl = new URL(window.location.href);
-        replaceUrl.search = '';
         replaceUrl.searchParams.delete('l');
         replaceUrl.searchParams.delete('u');
 
-        let newReplaceUrl = replaceUrl.toString();
         if (pathname !== '' && pathname !== '/') {
-          newReplaceUrl += (newReplaceUrl.includes('?') ? '&' : '?') + 'l=' + pathname;
+          replaceUrl.searchParams.set('l', pathname);
+        } else {
+          replaceUrl.searchParams.delete('l');
         }
 
-        logger.log('History replace to:', newReplaceUrl);
+        const newReplaceUrl = replaceUrl.toString();
         if (window.location.href !== newReplaceUrl) {
           history.replaceState({ title: event.data.title }, event.data.title || '', newReplaceUrl);
           if (event.data.title) {
