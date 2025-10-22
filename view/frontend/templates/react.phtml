@@ -17,6 +17,10 @@ try {
   $metaData = [];
 }
 
+if (!is_array($metaData)) {
+  $metaData = [];
+}
+
 $defaultTitle = __('Contestio customer community');
 $defaultDescription = __('Discover contests, surveys and community news powered by Contestio.');
 
