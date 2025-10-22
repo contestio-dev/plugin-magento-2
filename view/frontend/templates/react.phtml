@@ -10,6 +10,25 @@ if ($viewModel->isContestioRoute() === false) {
 /** @var \Contestio\Connect\Block\React $block */
 $iframeUrl = $block->getIframeUrl();
 $queryParams = $block->getQueryParams();
+
+try {
+  $metaData = $block->getMetaTags();
+} catch (\Exception $e) {
+  $metaData = [];
+}
+
+$defaultTitle = __('Contestio customer community');
+$defaultDescription = __('Discover contests, surveys and community news powered by Contestio.');
+
+$iframeTitle = isset($metaData['title']) && !empty($metaData['title'])
+  ? $block->escapeHtml($metaData['title'])
+  : $block->escapeHtml($defaultTitle);
+
+$iframeDescription = isset($metaData['description']) && !empty($metaData['description'])
+  ? $block->escapeHtml($metaData['description'])
+  : $block->escapeHtml($defaultDescription);
+
+$iframeFullUrl = $block->escapeUrl($iframeUrl . $queryParams);
 ?>
 
 <style>
@@ -29,7 +48,42 @@ $queryParams = $block->getQueryParams();
     padding: 0 !important;
     margin: 0 !important;
   }
+
+  .contestio-seo-intro {
+    margin-bottom: 1.5rem;
+    color: #1F2937;
+  }
+
+  .contestio-seo-intro h2 {
+    font-size: 1.75rem;
+    line-height: 1.3;
+    margin: 0 0 0.75rem;
+  }
+
+  .contestio-seo-intro p {
+    margin: 0;
+    font-size: 1rem;
+    line-height: 1.6;
+  }
+
+  .contestio-noscript {
+    margin-top: 1.5rem;
+    padding: 1rem;
+    background: #F9FAFB;
+    border: 1px solid #E5E7EB;
+    border-radius: 8px;
+  }
+
+  .contestio-noscript a {
+    color: #1D4ED8;
+    text-decoration: underline;
+  }
 </style>
+
+<div class="contestio-seo-intro">
+  <h2><?php /* translators: default Contestio iframe title */ echo $iframeTitle; ?></h2>
+  <p><?php /* translators: default Contestio iframe description */ echo $iframeDescription; ?></p>
+</div>
 
 <div class="contestio-container">
   <div class="contestio-loading" id="contestio-loading"></div>
@@ -41,12 +95,27 @@ $queryParams = $block->getQueryParams();
     data-url="<?php echo $iframeUrl; ?><?php echo $queryParams; ?>"
     width="100%" 
     height="100%"
+    loading="lazy"
     frameborder="0" 
     allowfullscreen 
     sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-popups-to-escape-sandbox"
+    title="<?php echo $iframeTitle; ?>"
+    aria-label="<?php echo $iframeTitle; ?>"
     class="contestio-iframe contestio-hidden">
   </iframe>
+
 </div>
+
+<noscript>
+  <div class="contestio-noscript">
+    <p>
+      <?php echo $block->escapeHtml(__('Activate JavaScript to interact with the Contestio community experience.')); ?>
+      <a href="<?php echo $iframeFullUrl; ?>" rel="nofollow">
+        <?php echo $block->escapeHtml(__('Access Contestio content')); ?>
+      </a>
+    </p>
+  </div>
+</noscript>
 
 <script>
 // ContestioGlobal pour contestio.js
