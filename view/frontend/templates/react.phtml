@@ -53,23 +53,6 @@ $iframeFullUrl = $block->escapeUrl($iframeUrl . $queryParams);
     margin: 0 !important;
   }
 
-  .contestio-seo-intro {
-    margin-bottom: 1.5rem;
-    color: #1F2937;
-  }
-
-  .contestio-seo-intro h2 {
-    font-size: 1.75rem;
-    line-height: 1.3;
-    margin: 0 0 0.75rem;
-  }
-
-  .contestio-seo-intro p {
-    margin: 0;
-    font-size: 1rem;
-    line-height: 1.6;
-  }
-
   .contestio-noscript {
     margin-top: 1.5rem;
     padding: 1rem;
@@ -84,7 +67,7 @@ $iframeFullUrl = $block->escapeUrl($iframeUrl . $queryParams);
   }
 </style>
 
-<div class="contestio-seo-intro">
+<div class="contestio-seo-intro" hidden>
   <h2><?php /* translators: default Contestio iframe title */ echo $iframeTitle; ?></h2>
   <p><?php /* translators: default Contestio iframe description */ echo $iframeDescription; ?></p>
 </div>
