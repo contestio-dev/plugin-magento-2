@@ -145,7 +145,7 @@ class React extends Template
         }
 
         if (empty($metaData['description']) || trim($metaData['description']) === trim($currentUrl)) {
-            $metaData['description'] = (string) __('Contestio permet aux marques de transformer leurs clients en une réelle communauté, en intégrant directement sur leur e-shop un espace communautaire clé en main et dopé à l’IA.');
+            $metaData['description'] = (string) __('Contestio aide les marques à transformer leurs clients en communauté grâce à un espace communautaire IA intégré directement sur leur e-shop.');
         }
 
         if (empty($metaData['canonicalUrl'])) {

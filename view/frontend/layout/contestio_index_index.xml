@@ -4,8 +4,9 @@
     <body>
         <referenceBlock name="page.main.title">
             <action method="addData">
-                <key>css_class</key>
-                <value>contestio-hidden-title</value>
+                <argument name="data" xsi:type="array">
+                    <item name="css_class" xsi:type="string">contestio-hidden-title</item>
+                </argument>
             </action>
         </referenceBlock>
     </body>
