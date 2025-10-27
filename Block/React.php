@@ -6,6 +6,8 @@ use Contestio\Connect\Helper\Data as ApiHelper;
 use Magento\Framework\Component\ComponentRegistrar;
 use Magento\Framework\Filesystem\DirectoryList;
 use Magento\Customer\Model\Session as CustomerSession;
+use Magento\Store\Model\StoreManagerInterface;
+use Magento\Framework\Exception\LocalizedException;
 
 class React extends Template
 {
@@ -14,6 +16,8 @@ class React extends Template
     protected $directoryList;
     protected $scopeConfig;
     protected $customerSession;
+    protected $storeManager;
+    protected $metaDataCache = null;
 
     public function __construct(
         Template\Context $context,
@@ -21,6 +25,7 @@ class React extends Template
         ComponentRegistrar $componentRegistrar,
         DirectoryList $directoryList,
         CustomerSession $customerSession,
+        StoreManagerInterface $storeManager,
         array $data = []
     ) {
         $this->apiHelper = $apiHelper;
@@ -28,6 +33,7 @@ class React extends Template
         $this->directoryList = $directoryList;
         $this->scopeConfig = $context->getScopeConfig();
         $this->customerSession = $customerSession;
+        $this->storeManager = $storeManager;
         parent::__construct($context, $data);
     }
 
@@ -78,6 +84,10 @@ class React extends Template
 
     public function getMetaTags()
     {
+        if ($this->metaDataCache !== null) {
+            return $this->metaDataCache;
+        }
+
         // Get current url
         $currentUrl = $this->getUrl('*/*/*', ['_current' => true, '_use_rewrite' => true]);
         $userAgent = $this->getRequest()->getHeader('User-Agent');
@@ -86,7 +96,7 @@ class React extends Template
             'title' => null,
             'image' => null,
             'siteName' => null,
-            'description' => $currentUrl,
+            'description' => null,
             'version' => null,
             'currentUrl' => $currentUrl,
             'canonicalUrl' => $currentUrl,
@@ -116,6 +126,82 @@ class React extends Template
             // Intentionally silent
         }
 
-        return $metaData;
+        $storeName = $metaData['siteName']
+            ?? $this->scopeConfig->getValue('general/store_information/name')
+            ?? $this->getStoreFrontendName();
+
+        if (empty($metaData['title'])) {
+            $metaData['title'] = $storeName
+                ? $storeName . ' – ' . __('Contestio community')
+                : (string) __('Contestio community');
+        } else {
+            $trimmedTitle = trim($metaData['title']);
+            if (mb_strlen($trimmedTitle) < 15 && $storeName) {
+                $metaData['title'] = $trimmedTitle . ' – ' . __('Contestio community');
+            } else {
+                $metaData['title'] = $trimmedTitle;
+            }
+        }
+
+        if (empty($metaData['description']) || trim($metaData['description']) === trim($currentUrl)) {
+            $metaData['description'] = (string) __('Contestio permet aux marques de transformer leurs clients en une réelle communauté, en intégrant directement sur leur e-shop un espace communautaire clé en main et dopé à l’IA.');
+        }
+
+        if (empty($metaData['canonicalUrl'])) {
+            $metaData['canonicalUrl'] = $currentUrl;
+        }
+
+        $this->metaDataCache = $metaData;
+        return $this->metaDataCache;
+    }
+
+    protected function _prepareLayout()
+    {
+        parent::_prepareLayout();
+
+        $viewModel = $this->getData('view_model');
+        if ($viewModel && method_exists($viewModel, 'isContestioRoute') && $viewModel->isContestioRoute() === false) {
+            return $this;
+        }
+
+        try {
+            $metaData = $this->getMetaTags();
+        } catch (LocalizedException $e) {
+            return $this;
+        } catch (Exception $e) {
+            return $this;
+        }
+
+        $pageConfig = $this->getPageConfig();
+        if (!$pageConfig || !is_array($metaData)) {
+            return $this;
+        }
+
+        if (!empty($metaData['title'])) {
+            $pageConfig->getTitle()->set($metaData['title']);
+        }
+
+        if (!empty($metaData['description'])) {
+            $pageConfig->setDescription($metaData['description']);
+        }
+
+        if (!empty($metaData['canonicalUrl'])) {
+            $pageConfig->addRemotePageAsset(
+                $metaData['canonicalUrl'],
+                'canonical',
+                ['attributes' => ['rel' => 'canonical']]
+            );
+        }
+
+        return $this;
+    }
+
+    protected function getStoreFrontendName()
+    {
+        try {
+            return $this->storeManager->getStore()->getFrontendName();
+        } catch (LocalizedException $e) {
+            return null;
+        }
     }
 }
