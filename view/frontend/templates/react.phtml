@@ -72,6 +72,31 @@ $iframeFullUrl = $block->escapeUrl($iframeUrl . $queryParams);
   <p><?php /* translators: default Contestio iframe description */ echo $iframeDescription; ?></p>
 </div>
 
+<?php if (!empty($metaData['highlights']) && is_array($metaData['highlights'])): ?>
+  <div class="contestio-seo-highlights" hidden>
+    <ul>
+      <?php foreach ($metaData['highlights'] as $highlight): ?>
+        <li><?php echo $block->escapeHtml($highlight); ?></li>
+      <?php endforeach; ?>
+    </ul>
+  </div>
+<?php endif; ?>
+
+<?php if (!empty($metaData['links']) && is_array($metaData['links'])): ?>
+  <div class="contestio-seo-links" hidden>
+    <ul>
+      <?php foreach ($metaData['links'] as $link): ?>
+        <?php
+          $href = isset($link['href']) ? $block->escapeUrl($link['href']) : '';
+          if (!$href) { continue; }
+          $linkText = isset($link['text']) && $link['text'] ? $block->escapeHtml($link['text']) : $iframeTitle;
+        ?>
+        <li><a href="<?php echo $href; ?>"><?php echo $linkText; ?></a></li>
+      <?php endforeach; ?>
+    </ul>
+  </div>
+<?php endif; ?>
+
 <div class="contestio-container">
   <div class="contestio-loading" id="contestio-loading"></div>
 

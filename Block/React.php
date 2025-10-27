@@ -34,7 +34,6 @@ class React extends Template
     public function getIframeUrl()
     {
         $baseUrl = $this->scopeConfig->getValue('contestio_connect/api_settings_advanced/base_url_iframe');
-        echo("<script>console.log('basurl: " . json_encode($baseUrl). "');</script>");
 
         return $baseUrl ? $baseUrl : "https://plugin.contestio.fr";
     }
@@ -73,9 +72,6 @@ class React extends Template
             }
         }
 
-        // Return the encoded params
-        echo("<script>console.log('paraaams222: " . json_encode($params) . "');</script>");
-
         return $params === "?" ? "" : $params;
         
     }
@@ -85,7 +81,6 @@ class React extends Template
         // Get current url
         $currentUrl = $this->getUrl('*/*/*', ['_current' => true, '_use_rewrite' => true]);
         $userAgent = $this->getRequest()->getHeader('User-Agent');
-        echo("<script>console.log('getmetatags1): " . json_encode($currentUrl) . "');</script>");
         // Default meta data
         $metaData = array(
             'title' => null,
@@ -94,6 +89,7 @@ class React extends Template
             'description' => $currentUrl,
             'version' => null,
             'currentUrl' => $currentUrl,
+            'canonicalUrl' => $currentUrl,
         );
 
         try {
@@ -113,17 +109,11 @@ class React extends Template
                 null
             );
 
-            echo("<script>console.log('response): " . json_encode($response) . "');</script>");
-
-            return $response;
-
             if ($response && is_array($response)) {
                 $metaData = array_merge($metaData, $response);
             }
         } catch (Exception $e) {
-            $mess = $e->getMessage();
-            echo("<script>console.log('e->getMessage: " . json_encode($mess) . "');</script>");
-            echo("<script>console.log('err: " . json_encode($e) . "');</script>");
+            // Intentionally silent
         }
 
         return $metaData;

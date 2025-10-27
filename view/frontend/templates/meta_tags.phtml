@@ -13,13 +13,31 @@ try {
   $metaData = [];
 }
 
+$pageConfig = method_exists($block, 'getPageConfig') ? $block->getPageConfig() : null;
+if ($pageConfig) {
+  if (!empty($metaData['title'])) {
+    $pageConfig->getTitle()->set($metaData['title']);
+  }
+  if (!empty($metaData['description'])) {
+    $pageConfig->setDescription($metaData['description']);
+  }
+  if (!empty($metaData['canonicalUrl'])) {
+    $pageConfig->addRemotePageAsset(
+      $metaData['canonicalUrl'],
+      'canonical',
+      ['attributes' => ['rel' => 'canonical']]
+    );
+  }
+}
+
 // Card type
 echo "<meta name='twitter:card' content='summary'>";
 
 // Og url
-if (isset($metaData['currentUrl'])) {
-  echo "<meta property='og:url' content='".$metaData['currentUrl']."'>";
-  echo "<meta property='twitter:url' content='".$metaData['currentUrl']."'>";
+$ogUrl = isset($metaData['canonicalUrl']) ? $metaData['canonicalUrl'] : (isset($metaData['currentUrl']) ? $metaData['currentUrl'] : null);
+if ($ogUrl) {
+  echo "<meta property='og:url' content='".$ogUrl."'>";
+  echo "<meta property='twitter:url' content='".$ogUrl."'>";
 }
 
 // Composer package version
