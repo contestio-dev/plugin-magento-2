@@ -8,6 +8,7 @@ use Magento\Framework\Filesystem\DirectoryList;
 use Magento\Customer\Model\Session as CustomerSession;
 use Magento\Store\Model\StoreManagerInterface;
 use Magento\Framework\Exception\LocalizedException;
+use Exception;
 
 class React extends Template
 {
