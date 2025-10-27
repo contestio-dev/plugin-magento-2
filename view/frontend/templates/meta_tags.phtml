@@ -21,13 +21,6 @@ if ($pageConfig) {
   if (!empty($metaData['description'])) {
     $pageConfig->setDescription($metaData['description']);
   }
-  if (!empty($metaData['canonicalUrl'])) {
-    $pageConfig->addRemotePageAsset(
-      $metaData['canonicalUrl'],
-      'canonical',
-      ['attributes' => ['rel' => 'canonical']]
-    );
-  }
 }
 
 // Card type
