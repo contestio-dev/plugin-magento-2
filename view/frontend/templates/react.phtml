@@ -158,6 +158,7 @@ if (typeof window.contestioGlobal === 'undefined') {
   let iframeInitialized = false;
   let loadFallbackTimeout = null;
   let lastPostedCustomerData = null;
+  let pendingCustomerData = null;
 
   const runCallbacks = (delay = 0) => {
     if (!window.contestioGlobal) {
@@ -238,24 +239,24 @@ if (typeof window.contestioGlobal === 'undefined') {
 
     const targetOrigin = getTargetOrigin(baseUrl);
 
-    const sendCustomerDataToIframe = (payload) => {
-      if (!payload) {
+    const dispatchPendingCustomerData = () => {
+      if (!pendingCustomerData) {
         return;
       }
 
       if (!iframe.contentWindow) {
-        iframe.addEventListener(
-          'load',
-          () => sendCustomerDataToIframe(payload),
-          { once: true }
-        );
         return;
       }
 
+      const normalized = {
+        customer_id: pendingCustomerData.customer_id || null,
+        customer_email: pendingCustomerData.customer_email || null,
+      };
+
       if (
         lastPostedCustomerData &&
-        lastPostedCustomerData.customer_id === payload.customer_id &&
-        lastPostedCustomerData.customer_email === payload.customer_email
+        lastPostedCustomerData.customer_id === normalized.customer_id &&
+        lastPostedCustomerData.customer_email === normalized.customer_email
       ) {
         return;
       }
@@ -264,21 +265,33 @@ if (typeof window.contestioGlobal === 'undefined') {
         iframe.contentWindow.postMessage(
           {
             type: 'contestio-customer-data',
-            payload: {
-              customer_id: payload.customer_id || null,
-              customer_email: payload.customer_email || null,
-            },
+            payload: normalized,
             timestamp: Date.now(),
           },
           targetOrigin
         );
-        lastPostedCustomerData = {
-          customer_id: payload.customer_id || null,
-          customer_email: payload.customer_email || null,
-        };
+        lastPostedCustomerData = normalized;
         log('Posted customer data to iframe');
       } catch (error) {
         log('Error posting customer data to iframe', error);
+      }
+    };
+
+    const sendCustomerDataToIframe = (payload) => {
+      if (!payload) {
+        return;
+      }
+
+      pendingCustomerData = {
+        customer_id: payload.customer_id || null,
+        customer_email: payload.customer_email || null,
+      };
+
+      if (
+        iframe.dataset.contestioIframeLoaded === 'true' ||
+        (window.contestioGlobal && window.contestioGlobal.iframeReady)
+      ) {
+        dispatchPendingCustomerData();
       }
     };
 
@@ -295,6 +308,7 @@ if (typeof window.contestioGlobal === 'undefined') {
         loading.style.display = 'none';
         iframe.classList.remove('contestio-hidden');
         iframe.dataset.contestioIframeLoaded = 'true';
+        dispatchPendingCustomerData();
         const isSafariIOS = /Safari/.test(navigator.userAgent) && /iPhone|iPad/.test(navigator.userAgent);
         const delay = isSafariIOS ? 2000 : 500;
         markIframeReady('load-event', delay);
@@ -305,6 +319,8 @@ if (typeof window.contestioGlobal === 'undefined') {
         log('Iframe onerror fired', e);
         loading.style.display = 'none';
         iframe.classList.remove('contestio-hidden');
+        iframe.dataset.contestioIframeLoaded = 'true';
+        dispatchPendingCustomerData();
         markIframeReady('load-error', 500);
       };
 
@@ -317,6 +333,8 @@ if (typeof window.contestioGlobal === 'undefined') {
           log('Iframe load fallback triggered');
           loading.style.display = 'none';
           iframe.classList.remove('contestio-hidden');
+          iframe.dataset.contestioIframeLoaded = 'true';
+          dispatchPendingCustomerData();
           markIframeReady('load-timeout', 500);
         }
       }, 6000);
