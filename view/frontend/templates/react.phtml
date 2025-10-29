@@ -156,7 +156,6 @@ if (typeof window.contestioGlobal === 'undefined') {
   // log('Is Safari iOS:', /Safari/.test(navigator.userAgent) && /iPhone|iPad/.test(navigator.userAgent));
   
   let iframeInitialized = false;
-  let loadFallbackTimeout = null;
   let lastPostedCustomerData = null;
   let pendingCustomerData = null;
 
@@ -303,7 +302,6 @@ if (typeof window.contestioGlobal === 'undefined') {
       iframeInitialized = true;
 
       iframe.onload = function() {
-        clearTimeout(loadFallbackTimeout);
         log('Iframe onload fired');
         loading.style.display = 'none';
         iframe.classList.remove('contestio-hidden');
@@ -315,7 +313,6 @@ if (typeof window.contestioGlobal === 'undefined') {
       };
 
       iframe.onerror = function(e) {
-        clearTimeout(loadFallbackTimeout);
         log('Iframe onerror fired', e);
         loading.style.display = 'none';
         iframe.classList.remove('contestio-hidden');
@@ -328,16 +325,6 @@ if (typeof window.contestioGlobal === 'undefined') {
         iframe.src = baseUrl;
       }
 
-      loadFallbackTimeout = setTimeout(() => {
-        if (window.contestioGlobal && !window.contestioGlobal.iframeReady) {
-          log('Iframe load fallback triggered');
-          loading.style.display = 'none';
-          iframe.classList.remove('contestio-hidden');
-          iframe.dataset.contestioIframeLoaded = 'true';
-          dispatchPendingCustomerData();
-          markIframeReady('load-timeout', 500);
-        }
-      }, 6000);
     };
 
     ensureIframeInitialized();
