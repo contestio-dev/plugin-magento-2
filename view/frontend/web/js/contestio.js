@@ -453,6 +453,13 @@
 
           try {
             switch (type) {
+              case 'contestio-iframe-ready':
+                iframeLoaded = true;
+                iframeElt.dataset.contestioIframeLoaded = 'true';
+                logger.log('contestio.js - iframe ready message received, flushing queue');
+                flushPendingNavigationActions();
+                break;
+
               case 'login':
                 const url = window.location.href.includes('?')
                   ? window.location.href.split('?')[0]

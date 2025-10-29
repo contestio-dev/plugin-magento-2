@@ -199,6 +199,31 @@ if (typeof window.contestioGlobal === 'undefined') {
     runCallbacks(delay);
   };
   
+  const handleIframeReadyMessage = (event) => {
+    if (!event || !event.data || event.data.type !== 'contestio-iframe-ready') {
+      return;
+    }
+
+    const iframe = document.getElementById('contestio-iframe');
+    const loading = document.getElementById('contestio-loading');
+    if (!iframe || event.source !== iframe.contentWindow) {
+      return;
+    }
+
+    log('Iframe ready message received');
+    clearTimeout(loadFallbackTimeout);
+    if (loading) {
+      loading.style.display = 'none';
+    }
+    iframe.classList.remove('contestio-hidden');
+    iframe.dataset.contestioIframeLoaded = 'true';
+    iframeLoaded = true;
+    markIframeReady('message');
+    window.removeEventListener('message', handleIframeReadyMessage);
+  };
+
+  window.addEventListener('message', handleIframeReadyMessage);
+  
   function init() {
     log('Init function called');
     log('contestioGlobal state:', window.contestioGlobal);
