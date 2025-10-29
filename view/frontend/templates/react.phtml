@@ -155,9 +155,10 @@ if (typeof window.contestioGlobal === 'undefined') {
   log('User Agent:', navigator.userAgent);
   // log('Is Safari iOS:', /Safari/.test(navigator.userAgent) && /iPhone|iPad/.test(navigator.userAgent));
   
-  // Variable pour éviter le double chargement
-  let iframeLoaded = false;
+  let iframeInitialized = false;
   let loadFallbackTimeout = null;
+  let lastPostedCustomerData = null;
+  let pendingCustomerData = null;
 
   const runCallbacks = (delay = 0) => {
     if (!window.contestioGlobal) {
@@ -198,32 +199,24 @@ if (typeof window.contestioGlobal === 'undefined') {
 
     runCallbacks(delay);
   };
-  
-  const handleIframeReadyMessage = (event) => {
-    if (!event || !event.data || event.data.type !== 'contestio-iframe-ready') {
-      return;
+
+  const getTargetOrigin = (url) => {
+    if (!url) {
+      return "*";
     }
 
-    const iframe = document.getElementById('contestio-iframe');
-    const loading = document.getElementById('contestio-loading');
-    if (!iframe || event.source !== iframe.contentWindow) {
-      return;
+    try {
+      const parsed = new URL(url);
+      if (parsed.origin && parsed.origin !== "null") {
+        return parsed.origin;
+      }
+    } catch (_error) {
+      // ignore invalid url
     }
 
-    log('Iframe ready message received');
-    clearTimeout(loadFallbackTimeout);
-    if (loading) {
-      loading.style.display = 'none';
-    }
-    iframe.classList.remove('contestio-hidden');
-    iframe.dataset.contestioIframeLoaded = 'true';
-    iframeLoaded = true;
-    markIframeReady('message');
-    window.removeEventListener('message', handleIframeReadyMessage);
+    return "*";
   };
 
-  window.addEventListener('message', handleIframeReadyMessage);
-  
   function init() {
     log('Init function called');
     log('contestioGlobal state:', window.contestioGlobal);
@@ -236,16 +229,119 @@ if (typeof window.contestioGlobal === 'undefined') {
       return;
     }
 
-    // Vérifier si l'iframe a déjà un src
-    if (iframe.src && iframe.src !== 'about:blank') {
-      log('Iframe already has src, aborting to prevent double load');
+    const baseUrl = iframe.getAttribute('data-url');
+    if (!baseUrl) {
+      log('No base URL found for iframe');
       return;
     }
 
-    // Récupérer l'URL de base depuis data-url
-    const baseUrl = iframe.getAttribute('data-url');
     iframe.dataset.contestioBaseUrl = baseUrl;
-    
+
+    const targetOrigin = getTargetOrigin(baseUrl);
+
+    const dispatchPendingCustomerData = () => {
+      if (!pendingCustomerData) {
+        return;
+      }
+
+      if (!iframe.contentWindow) {
+        return;
+      }
+
+      const normalized = {
+        customer_id: pendingCustomerData.customer_id || null,
+        customer_email: pendingCustomerData.customer_email || null,
+      };
+
+      if (
+        lastPostedCustomerData &&
+        lastPostedCustomerData.customer_id === normalized.customer_id &&
+        lastPostedCustomerData.customer_email === normalized.customer_email
+      ) {
+        return;
+      }
+
+      try {
+        iframe.contentWindow.postMessage(
+          {
+            type: 'contestio-customer-data',
+            payload: normalized,
+            timestamp: Date.now(),
+          },
+          targetOrigin
+        );
+        lastPostedCustomerData = normalized;
+        log('Posted customer data to iframe');
+      } catch (error) {
+        log('Error posting customer data to iframe', error);
+      }
+    };
+
+    const sendCustomerDataToIframe = (payload) => {
+      if (!payload) {
+        return;
+      }
+
+      pendingCustomerData = {
+        customer_id: payload.customer_id || null,
+        customer_email: payload.customer_email || null,
+      };
+
+      if (
+        iframe.dataset.contestioIframeLoaded === 'true' ||
+        (window.contestioGlobal && window.contestioGlobal.iframeReady)
+      ) {
+        dispatchPendingCustomerData();
+      }
+    };
+
+    const ensureIframeInitialized = () => {
+      if (iframeInitialized) {
+        return;
+      }
+
+      iframeInitialized = true;
+
+      iframe.onload = function() {
+        clearTimeout(loadFallbackTimeout);
+        log('Iframe onload fired');
+        loading.style.display = 'none';
+        iframe.classList.remove('contestio-hidden');
+        iframe.dataset.contestioIframeLoaded = 'true';
+        dispatchPendingCustomerData();
+        const isSafariIOS = /Safari/.test(navigator.userAgent) && /iPhone|iPad/.test(navigator.userAgent);
+        const delay = isSafariIOS ? 2000 : 500;
+        markIframeReady('load-event', delay);
+      };
+
+      iframe.onerror = function(e) {
+        clearTimeout(loadFallbackTimeout);
+        log('Iframe onerror fired', e);
+        loading.style.display = 'none';
+        iframe.classList.remove('contestio-hidden');
+        iframe.dataset.contestioIframeLoaded = 'true';
+        dispatchPendingCustomerData();
+        markIframeReady('load-error', 500);
+      };
+
+      if (!iframe.src || iframe.src === 'about:blank') {
+        iframe.src = baseUrl;
+      }
+
+      loadFallbackTimeout = setTimeout(() => {
+        if (window.contestioGlobal && !window.contestioGlobal.iframeReady) {
+          log('Iframe load fallback triggered');
+          loading.style.display = 'none';
+          iframe.classList.remove('contestio-hidden');
+          iframe.dataset.contestioIframeLoaded = 'true';
+          dispatchPendingCustomerData();
+          markIframeReady('load-timeout', 500);
+        }
+      }, 6000);
+    };
+
+    ensureIframeInitialized();
+
     const fetchStartTime = Date.now();    
     // Récupérer les données utilisateur
     fetch('/contestio/ajax/customerData', {
@@ -264,55 +360,15 @@ if (typeof window.contestioGlobal === 'undefined') {
       .then(data => {
         // Marquer les données comme chargées
         window.contestioGlobal.customerDataLoaded = true;
+
+        ensureIframeInitialized();
         
-        // Vérifier encore une fois
-        if (iframeLoaded || (iframe.src && iframe.src !== 'about:blank')) {
-          log('Iframe already loaded, aborting');
-          return;
+        if (data && (data.customer_id || data.customer_email)) {
+          sendCustomerDataToIframe({
+            customer_id: data.customer_id || null,
+            customer_email: data.customer_email || null,
+          });
         }
-        
-        // Construire l'URL finale avec tous les paramètres
-        let finalUrl = baseUrl;
-        if (data.customer_id && data.customer_email) {
-          const separator = baseUrl.includes('?') ? '&' : '?';
-          finalUrl = `${baseUrl}${separator}customer_id=${encodeURIComponent(data.customer_id)}&customer_email=${encodeURIComponent(data.customer_email)}`;
-        }
-        
-        // Charger l'iframe UNE SEULE FOIS
-        iframeLoaded = true;
-        
-        // Event listener AVANT de définir src
-        iframe.onload = function() {
-          clearTimeout(loadFallbackTimeout);
-          log('Iframe onload fired');
-          
-          // Montrer l'iframe
-          loading.style.display = 'none';
-          iframe.classList.remove('contestio-hidden');
-          
-          // Marquer l'iframe comme prête
-          const isSafariIOS = /Safari/.test(navigator.userAgent) && /iPhone|iPad/.test(navigator.userAgent);
-          const delay = isSafariIOS ? 2000 : 500;
-          markIframeReady('load-event', delay);
-        };
-        
-        iframe.onerror = function(e) {
-          clearTimeout(loadFallbackTimeout);
-          log('Iframe onerror fired', e);
-          markIframeReady('load-error', 500);
-        };
-        
-        // Définition du src
-        iframe.src = finalUrl;
-        loadFallbackTimeout = setTimeout(() => {
-          if (window.contestioGlobal && !window.contestioGlobal.iframeReady) {
-            log('Iframe load fallback triggered');
-            loading.style.display = 'none';
-            iframe.classList.remove('contestio-hidden');
-            markIframeReady('load-timeout', 500);
-          }
-        }, 6000);
-        
       })
       .catch(error => {
         log('Error in fetch chain:', {
@@ -321,35 +377,7 @@ if (typeof window.contestioGlobal === 'undefined') {
         
         // Marquer comme chargé même en cas d'erreur
         window.contestioGlobal.customerDataLoaded = true;
-        
-        // En cas d'erreur, charger quand même l'iframe
-        if (!iframeLoaded && (!iframe.src || iframe.src === 'about:blank')) {
-          log('Loading iframe with base URL due to error');
-          iframeLoaded = true;
-          iframe.dataset.contestioBaseUrl = baseUrl;
-          iframe.src = baseUrl;
-          iframe.onload = function() {
-            clearTimeout(loadFallbackTimeout);
-            loading.style.display = 'none';
-            iframe.classList.remove('contestio-hidden');
-            markIframeReady('fallback-load', 500);
-          };
-          iframe.onerror = function() {
-            clearTimeout(loadFallbackTimeout);
-            loading.style.display = 'none';
-            iframe.classList.remove('contestio-hidden');
-            markIframeReady('fallback-error', 500);
-          };
-
-          loadFallbackTimeout = setTimeout(() => {
-            if (window.contestioGlobal && !window.contestioGlobal.iframeReady) {
-              log('Iframe load fallback triggered (error branch)');
-              loading.style.display = 'none';
-              iframe.classList.remove('contestio-hidden');
-              markIframeReady('fallback-timeout', 500);
-            }
-          }, 6000);
-        }
+        ensureIframeInitialized();
       });
   }
 

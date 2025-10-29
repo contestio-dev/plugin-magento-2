@@ -309,6 +309,12 @@
     
     // Attendre que l'iframe soit prête
     const waitForIframe = () => {
+      const contestioIframe = document.getElementById('contestio-iframe');
+      if (!contestioIframe) {
+        logger.warn('contestio.js - no iframe element found, aborting initialisation loop');
+        return;
+      }
+
       if (!window.contestioGlobal || !window.contestioGlobal.iframeReady) {
         logger.log(`waiting for iframe to be ready [${Date.now() - startTime}ms]`);
         
@@ -453,13 +459,6 @@
 
           try {
             switch (type) {
-              case 'contestio-iframe-ready':
-                iframeLoaded = true;
-                iframeElt.dataset.contestioIframeLoaded = 'true';
-                logger.log('contestio.js - iframe ready message received, flushing queue');
-                flushPendingNavigationActions();
-                break;
-
               case 'login':
                 const url = window.location.href.includes('?')
                   ? window.location.href.split('?')[0]
