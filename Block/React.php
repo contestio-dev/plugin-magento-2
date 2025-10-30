@@ -133,12 +133,12 @@ class React extends Template
 
         if (empty($metaData['title'])) {
             $metaData['title'] = $storeName
-                ? $storeName . ' – ' . __('Contestio community')
-                : (string) __('Contestio community');
+                ? $storeName . ' – ' . __('Communauté')
+                : (string) __('Communauté');
         } else {
             $trimmedTitle = trim($metaData['title']);
             if (mb_strlen($trimmedTitle) < 15 && $storeName) {
-                $metaData['title'] = $trimmedTitle . ' – ' . __('Contestio community');
+                $metaData['title'] = $trimmedTitle . ' – ' . __('Communauté');
             } else {
                 $metaData['title'] = $trimmedTitle;
             }
