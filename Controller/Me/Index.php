@@ -26,6 +26,11 @@ class Index extends Action
 
     public function execute()
     {
+        // Prevent caching
+        $this->getResponse()->setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+        $this->getResponse()->setHeader('Pragma', 'no-cache');
+        $this->getResponse()->setHeader('Expires', '0');
+        
         try {
             // Vérifier le header Authorization
             $authHeader = $this->getRequest()->getHeader('Authorization');

@@ -6,8 +6,11 @@ use Magento\Framework\App\Action\Context;
 use Magento\Framework\Controller\Result\JsonFactory;
 use Magento\Customer\Model\Session as CustomerSession;
 use Contestio\Connect\Helper\Data as ApiHelper;
+use Magento\Framework\App\CsrfAwareActionInterface;
+use Magento\Framework\App\Request\InvalidRequestException;
+use Magento\Framework\App\RequestInterface;
 
-class CustomerData extends Action
+class CustomerData extends Action implements CsrfAwareActionInterface
 {
     protected $jsonFactory;
     protected $customerSession;
@@ -31,6 +34,14 @@ class CustomerData extends Action
     public function execute()
     {
         $result = $this->jsonFactory->create();
+        
+        // Ensure the method is POST
+        if ($this->getRequest()->getMethod() !== 'POST') {
+            return $result->setData([
+                'success' => false,
+                'message' => __('Method not allowed.')
+            ])->setHttpResponseCode(405);
+        }
         
         // Headers spécifiques pour Safari iOS
         $this->getResponse()->setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
@@ -68,5 +79,21 @@ class CustomerData extends Action
             return $result->setData($responseData);
         }
         return $result->setData([]);
+    }
+    
+    /**
+     * @inheritDoc
+     */
+    public function createCsrfValidationException(RequestInterface $request): ?InvalidRequestException
+    {
+        return null;
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function validateForCsrf(RequestInterface $request): ?bool
+    {
+        return true;
     }
 }

@@ -332,10 +332,11 @@ if (typeof window.contestioGlobal === 'undefined') {
     const fetchStartTime = Date.now();    
     // Récupérer les données utilisateur
     fetch('/contestio/ajax/customerData', {
-      method: 'GET',
+      method: 'POST',
       credentials: 'include',
       headers: {
         'Accept': 'application/json',
+        'Content-Type': 'application/json'
       }
     })
       .then(response => {

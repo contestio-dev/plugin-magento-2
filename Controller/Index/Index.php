@@ -24,6 +24,11 @@ class Index extends Action
     public function execute()
     {
         $resultPage = $this->resultPageFactory->create();
+        
+        // Prevent caching
+        $this->getResponse()->setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+        $this->getResponse()->setHeader('Pragma', 'no-cache');
+        $this->getResponse()->setHeader('Expires', '0');
 
         try {
             $layout = $resultPage->getLayout();
