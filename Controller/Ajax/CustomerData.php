@@ -35,6 +35,13 @@ class CustomerData extends Action implements CsrfAwareActionInterface
     {
         $result = $this->jsonFactory->create();
         
+        // Handle OPTIONS request (CORS preflight)
+        if ($this->getRequest()->getMethod() === 'OPTIONS') {
+            $this->getResponse()->setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
+            $this->getResponse()->setHeader('Access-Control-Allow-Headers', 'Content-Type, Accept');
+            return $result->setHttpResponseCode(200);
+        }
+        
         // Ensure the method is POST
         if ($this->getRequest()->getMethod() !== 'POST') {
             return $result->setData([

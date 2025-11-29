@@ -5,7 +5,6 @@ use Magento\Framework\View\Element\Template;
 use Contestio\Connect\Helper\Data as ApiHelper;
 use Magento\Framework\Component\ComponentRegistrar;
 use Magento\Framework\Filesystem\DirectoryList;
-use Magento\Customer\Model\Session as CustomerSession;
 use Magento\Store\Model\StoreManagerInterface;
 use Magento\Framework\Exception\LocalizedException;
 use Exception;
@@ -16,7 +15,6 @@ class React extends Template
     protected $componentRegistrar;
     protected $directoryList;
     protected $scopeConfig;
-    protected $customerSession;
     protected $storeManager;
     protected $metaDataCache = null;
 
@@ -25,7 +23,6 @@ class React extends Template
         ApiHelper $apiHelper,
         ComponentRegistrar $componentRegistrar,
         DirectoryList $directoryList,
-        CustomerSession $customerSession,
         StoreManagerInterface $storeManager,
         array $data = []
     ) {
@@ -33,7 +30,6 @@ class React extends Template
         $this->componentRegistrar = $componentRegistrar;
         $this->directoryList = $directoryList;
         $this->scopeConfig = $context->getScopeConfig();
-        $this->customerSession = $customerSession;
         $this->storeManager = $storeManager;
         parent::__construct($context, $data);
     }

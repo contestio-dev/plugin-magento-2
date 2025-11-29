@@ -5,22 +5,4 @@
         <script src="Contestio_Connect::js/contestio.js"/>
         <attribute name="defer" value="true"/>
     </head>
-
-    <body>
-        <referenceContainer name="head.additional">
-            <block class="Contestio\Connect\Block\React" name="contestio_meta_tags" template="Contestio_Connect::meta_tags.phtml">
-                <arguments>
-                    <argument name="view_model" xsi:type="object">Contestio\Connect\ViewModel\RouteChecker</argument>
-                </arguments>
-            </block>
-        </referenceContainer>
-
-        <referenceContainer name="content">
-            <block class="Contestio\Connect\Block\React" name="contestio_react" template="Contestio_Connect::react.phtml">
-                <arguments>
-                    <argument name="view_model" xsi:type="object">Contestio\Connect\ViewModel\RouteChecker</argument>
-                </arguments>
-            </block>
-        </referenceContainer>
-    </body>
 </page>

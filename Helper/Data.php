@@ -5,23 +5,19 @@ use Magento\Store\Model\ScopeInterface;
 use Magento\Framework\App\Helper\AbstractHelper;
 use Magento\Framework\App\Helper\Context;
 use Magento\Framework\HTTP\Client\Curl;
-use Magento\Customer\Model\Session;
 use Magento\Framework\App\Config\ScopeConfigInterface;
 
 class Data extends AbstractHelper
 {
     protected $curl;
-    protected $customerSession;
     protected $scopeConfig;
 
     public function __construct(
         Context $context,
         Curl $curl,
-        Session $customerSession,
         ScopeConfigInterface $scopeConfig
     ) {
         $this->curl = $curl;
-        $this->customerSession = $customerSession;
         $this->scopeConfig = $scopeConfig;
         parent::__construct($context);
     }
@@ -49,7 +45,7 @@ class Data extends AbstractHelper
         ]));
     }
 
-    public function callApi($userAgent, $endpoint, $method, $data = null)
+    public function callApi($userAgent, $endpoint, $method, $data = null, $customerId = null, $customerEmail = null)
     {
         $url = $this->getApiBaseUrl() . '/' . $endpoint;
         
@@ -59,16 +55,11 @@ class Data extends AbstractHelper
             'clientuseragent' => $userAgent
         ];
 
-        // Add customer id and email to headers
-        if ($this->customerSession->isLoggedIn()) {
-            $headers['client-customer-id'] = $this->encryptDataBase64(
-                $this->customerSession->getCustomerId(),
-                $this->scopeConfig->getValue('contestio_connect/api_settings/access_token')
-            );
-            $headers['client-customer-email'] = $this->encryptDataBase64(
-                $this->customerSession->getCustomer()->getEmail(),
-                $this->scopeConfig->getValue('contestio_connect/api_settings/access_token')
-            );
+        // Add customer id and email to headers if provided
+        if ($customerId && $customerEmail) {
+            $accessToken = $this->scopeConfig->getValue('contestio_connect/api_settings/access_token');
+            $headers['client-customer-id'] = $this->encryptDataBase64($customerId, $accessToken);
+            $headers['client-customer-email'] = $this->encryptDataBase64($customerEmail, $accessToken);
         }
 
         // Set headers

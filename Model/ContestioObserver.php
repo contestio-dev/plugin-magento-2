@@ -28,8 +28,12 @@ class ContestioObserver implements ObserverInterface
         try {
             $userAgent = $_SERVER['HTTP_USER_AGENT'] ?? '';
             
+            // Get customer data from order
+            $customerId = $order->getCustomerId();
+            $customerEmail = $order->getCustomerEmail();
+            
             // Get user id and check if we store order
-            $checkUser = $this->apiHelper->callApi($userAgent, 'v1/users/me', "GET");
+            $checkUser = $this->apiHelper->callApi($userAgent, 'v1/users/me', "GET", null, $customerId, $customerEmail);
 
             // If storeOrder === true, send order to Contestio
             if ($checkUser && isset($checkUser['storeOrder']) && $checkUser['storeOrder'] === true) {
@@ -40,7 +44,7 @@ class ContestioObserver implements ObserverInterface
                 );
 
                 // Send order to Contestio
-                $this->apiHelper->callApi($userAgent, 'v1/users/final/new-order', "POST", $orderData);
+                $this->apiHelper->callApi($userAgent, 'v1/users/final/new-order', "POST", $orderData, $customerId, $customerEmail);
             }
         } catch (\Exception $e) {
             return false;
