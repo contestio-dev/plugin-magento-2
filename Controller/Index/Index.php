@@ -4,7 +4,6 @@ namespace Contestio\Connect\Controller\Index;
 use Magento\Framework\App\Action\Action;
 use Magento\Framework\App\Action\Context;
 use Magento\Framework\View\Result\PageFactory;
-use Contestio\Connect\Helper\Data as ApiHelper;
 use Contestio\Connect\Block\React as ReactBlock;
 use Exception;
 
@@ -14,11 +13,10 @@ class Index extends Action
 
     public function __construct(
         Context $context,
-        PageFactory $resultPageFactory,
-        ApiHelper $apiHelper
+        PageFactory $resultPageFactory
     ) {
         $this->resultPageFactory = $resultPageFactory;
-        parent::__construct($context, $apiHelper);
+        parent::__construct($context);
     }
 
     public function execute()
