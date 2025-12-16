@@ -1,6 +1,11 @@
 <?xml version="1.0"?>
 <page xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" layout="1column"
       xsi:noNamespaceSchemaLocation="urn:magento:framework:View/Layout/etc/page_configuration.xsd">
+    <head>
+        <link rel="stylesheet" src="Contestio_Connect::css/contestio.css"/>
+        <script src="Contestio_Connect::js/contestio.js"/>
+        <attribute name="defer" value="true"/>
+    </head>
     <body>
         <referenceBlock name="page.main.title">
             <action method="addData">
