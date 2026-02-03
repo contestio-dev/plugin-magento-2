@@ -115,17 +115,12 @@ class Index extends Action
             foreach ($productList->getItems() as $product) {
                 $imageUrl = null;
                 try {
-                    // Use product_base_image with 200px resize for better quality (matching Magento 1)
-                    $imageUrl = $this->imageHelper->init($product, 'product_base_image')
+                    // Use 'small_image' attribute with 200px resize (matching Magento 1)
+                    $imageUrl = $this->imageHelper->init($product, 'small_image')
                         ->resize(200)
                         ->getUrl();
                 } catch (\Exception $e) {
-                    // Fallback to thumbnail if base image fails
-                    try {
-                        $imageUrl = $this->imageHelper->init($product, 'product_thumbnail_image')->getUrl();
-                    } catch (\Exception $e2) {
-                        // Image non disponible
-                    }
+                    // Image non disponible
                 }
 
                 $products[] = [
