@@ -64,6 +64,7 @@ class Index extends Action
 
             // Paramètres de recherche
             $search = $this->getRequest()->getParam('search');
+            $ids = $this->getRequest()->getParam('ids');
             $pageSize = (int) ($this->getRequest()->getParam('limit') ?? 20);
             $currentPage = (int) ($this->getRequest()->getParam('page') ?? 1);
 
@@ -73,9 +74,20 @@ class Index extends Action
             }
 
             // Construire les critères de recherche
-            $this->searchCriteriaBuilder
-                ->setPageSize($pageSize)
-                ->setCurrentPage($currentPage);
+            // Pagination seulement si pas de filtre par IDs
+            if (!$ids) {
+                $this->searchCriteriaBuilder
+                    ->setPageSize($pageSize)
+                    ->setCurrentPage($currentPage);
+            }
+
+            // Filtrer par IDs si fournis (pour récupérer des produits spécifiques)
+            if ($ids) {
+                $productIds = array_filter(array_map('trim', explode(',', $ids)));
+                if (!empty($productIds)) {
+                    $this->searchCriteriaBuilder->addFilter('entity_id', $productIds, 'in');
+                }
+            }
 
             // Filtrer par nom si recherche
             if ($search) {
