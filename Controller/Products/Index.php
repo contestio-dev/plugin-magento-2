@@ -7,7 +7,6 @@ use Magento\Framework\App\Action\Context;
 use Magento\Framework\Controller\Result\JsonFactory;
 use Magento\Catalog\Api\ProductRepositoryInterface;
 use Magento\Framework\Api\SearchCriteriaBuilder;
-use Magento\Framework\Api\FilterBuilder;
 use Magento\Framework\Exception\AuthenticationException;
 use Magento\Catalog\Helper\Image as ImageHelper;
 use Magento\Store\Model\StoreManagerInterface;
@@ -17,7 +16,6 @@ class Index extends Action
     protected $resultJsonFactory;
     protected $productRepository;
     protected $searchCriteriaBuilder;
-    protected $filterBuilder;
     protected $imageHelper;
     protected $storeManager;
 
@@ -26,14 +24,12 @@ class Index extends Action
         JsonFactory $resultJsonFactory,
         ProductRepositoryInterface $productRepository,
         SearchCriteriaBuilder $searchCriteriaBuilder,
-        FilterBuilder $filterBuilder,
         ImageHelper $imageHelper,
         StoreManagerInterface $storeManager
     ) {
         $this->resultJsonFactory = $resultJsonFactory;
         $this->productRepository = $productRepository;
         $this->searchCriteriaBuilder = $searchCriteriaBuilder;
-        $this->filterBuilder = $filterBuilder;
         $this->imageHelper = $imageHelper;
         $this->storeManager = $storeManager;
         parent::__construct($context);
@@ -91,12 +87,7 @@ class Index extends Action
 
             // Filtrer par nom si recherche
             if ($search) {
-                $filter = $this->filterBuilder
-                    ->setField('name')
-                    ->setValue('%' . $search . '%')
-                    ->setConditionType('like')
-                    ->create();
-                $this->searchCriteriaBuilder->addFilter($filter);
+                $this->searchCriteriaBuilder->addFilter('name', '%' . $search . '%', 'like');
             }
 
             // Uniquement les produits actifs
